@@ -6,7 +6,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/younelan/IssueViewer"
+            "url": "https://github.com/younelan/Simplicity"
         }
     ],
     "autoload": {
