@@ -1,0 +1,27 @@
+{
+    "name": "opensitez/issueviewer",
+    "description": "Opensitez Issue Viewer",
+    "type": "project",
+    "license": "MIT",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/younelan/IssueViewer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+        }
+    },
+    "authors": [
+        {
+            "name": "Youness El Andaloussi",
+            "email": "youness@elandaloussi.net"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "opensitez/simplicity": "dev-master",
+        "twig/twig": "^3.14"
+    }
+}
