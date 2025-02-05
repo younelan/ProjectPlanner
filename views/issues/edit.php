@@ -38,24 +38,24 @@ include 'views/templates/header.php';
                         <label for="assignee">Assignee</label>
                         <select class="form-control" id="assignee" name="assignee">
                             <option value="">Unassigned</option>
-                            <?php foreach ($users as $username): ?>
-                                <option value="<?= htmlspecialchars($username) ?>" 
-                                    <?= $username === $issue['ASSIGNEE'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($username) ?>
-                                </option>
-                            <?php endforeach; ?>
+                                <?php foreach ($users as $user): ?>
+                                    <option value="<?= htmlspecialchars($user['LOWER_USER_NAME']) ?>">
+                                        <?= htmlspecialchars($user['LOWER_USER_NAME']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label for="reporter">Reporter</label>
                         <select class="form-control" id="reporter" name="reporter">
-                            <?php foreach ($users as $username): ?>
-                                <option value="<?= htmlspecialchars($username) ?>" 
-                                    <?= $username === $issue['REPORTER'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($username) ?>
-                                </option>
-                            <?php endforeach; ?>
+                        <?php foreach ($users as $user): ?>
+                                    <option value="<?= htmlspecialchars($user['LOWER_USER_NAME']) ?>">
+                                        <?= htmlspecialchars($user['LOWER_USER_NAME']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                         </select>
                     </div>
 

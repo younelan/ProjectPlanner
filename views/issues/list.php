@@ -22,6 +22,10 @@ include 'views/templates/header.php';
                     <a href="index.php?page=projects&action=board&id=<?= $project['ID'] ?>" class="btn btn-outline-primary">
                         <i class="fas fa-columns"></i> Switch to Board
                     </a>
+                    <a href="index.php?page=issues&action=create&projectId=<?= htmlspecialchars($project['ID']) ?>" 
+                       class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create New Issue
+                    </a>
                 </div>
             </div>
             <div class="card-body">
@@ -72,6 +76,15 @@ include 'views/templates/header.php';
                                    class="btn btn-sm btn-primary">
                                     <i class="fas fa-eye"></i> View
                                 </a>
+                                <a href="index.php?page=issues&action=edit&id=<?= $issue['ID'] ?>" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger delete-issue" 
+                                        data-issue-id="<?= $issue['ID'] ?>"
+                                        data-issue-key="<?= htmlspecialchars($project['PKEY'] . '-' . $issue['ID']) ?>">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -81,6 +94,33 @@ include 'views/templates/header.php';
         </div>
     </div>
 </div>
+
+<script>
+document.querySelectorAll('.delete-issue').forEach(button => {
+    button.addEventListener('click', function(e) {
+        e.preventDefault();
+        const issueId = this.dataset.issueId;
+        const issueKey = this.dataset.issueKey;
+        if (confirm(`Are you sure you want to delete issue ${issueKey}?`)) {
+            fetch(`index.php?page=issues&action=delete&id=${issueId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.closest('tr').remove();
+                } else {
+                    alert(data.error || 'Failed to delete issue');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to delete issue');
+            });
+        }
+    });
+});
+</script>
 
 <?php 
 // Helper functions for the view

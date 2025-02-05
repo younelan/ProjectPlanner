@@ -8,28 +8,28 @@ class Issue {
 
     // Get a specific issue by ID, including its type and status details
     public function getIssueById($id) {
-        $stmt = $this->db->prepare("
-            SELECT 
-                i.*,
-                s.PNAME AS STATUS_NAME, 
-                s.ICONURL AS STATUS_ICON,
-                p.PKEY AS PROJECT_KEY,
-                p.PNAME AS PROJECT_NAME,
-                t.PNAME AS TYPE,
-                pr.PNAME AS PRIORITY_NAME,
-                pr.ICONURL AS PRIORITY_ICON,
-                pr.STATUS_COLOR AS PRIORITY_COLOR
-            FROM JIRAISSUE i
-            JOIN PROJECT p ON i.PROJECT = p.ID
-            JOIN ISSUETYPE t ON i.ISSUETYPE = t.ID
-            JOIN ISSUESTATUS s ON i.ISSUESTATUS = s.ID
-            LEFT JOIN PRIORITY pr ON i.PRIORITY = pr.ID
-            WHERE i.ID = :id
-        ");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
+        $query = "
+            SELECT j.*, 
+                   p.PKEY as PROJECT_KEY,
+                   it.PNAME as TYPE,
+                   s.PNAME as STATUS_NAME,
+                   s.ICONURL as STATUS_ICON,
+                   pr.PNAME as PRIORITY_NAME,
+                   pr.STATUS_COLOR as PRIORITY_COLOR
+            FROM JIRAISSUE j
+            LEFT JOIN PROJECT p ON j.PROJECT = p.ID
+            LEFT JOIN ISSUETYPE it ON j.ISSUETYPE = it.ID
+            LEFT JOIN ISSUESTATUS s ON j.ISSUESTATUS = s.ID
+            LEFT JOIN PRIORITY pr ON j.PRIORITY = pr.ID
+            WHERE j.ID = :id
+        ";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([':id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    // Get all issues for a specific project
 
     // Get all issues for a specific project
     public function getIssuesByProject($projectId) {
@@ -529,5 +529,87 @@ public function getProjectIssuesWithSubcomponents($projectId) {
             'term' => "%$term%"
         ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function createIssue($data) {
+        try {
+            // Get next ID
+            $stmt = $this->db->query("SELECT MAX(ID) FROM JIRAISSUE");
+            $maxId = $stmt->fetchColumn();
+            $newId = ($maxId ? $maxId : 10000) + 1;
+
+            // Get project counter and increment
+            $stmt = $this->db->prepare("SELECT PCOUNTER FROM PROJECT WHERE ID = :projectId");
+            $stmt->execute([':projectId' => $data['projectId']]);
+            $counter = $stmt->fetchColumn();
+            $newCounter = $counter + 1;
+
+            // Update project counter
+            $stmt = $this->db->prepare("UPDATE PROJECT SET PCOUNTER = :counter WHERE ID = :projectId");
+            $stmt->execute([
+                ':counter' => $newCounter,
+                ':projectId' => $data['projectId']
+            ]);
+
+            // Insert new issue with default values
+            $stmt = $this->db->prepare("
+                INSERT INTO JIRAISSUE (
+                    ID, PROJECT, ISSUENUM, SUMMARY, DESCRIPTION, 
+                    ISSUETYPE, PRIORITY, REPORTER, ASSIGNEE, 
+                    CREATED, UPDATED, ISSUESTATUS
+                ) VALUES (
+                    :id, :projectId, :issuenum, :summary, :description,
+                    :issuetype, :priority, :reporter, :assignee,
+                    NOW(), NOW(), 'Open'
+                )
+            ");
+
+            $params = [
+                ':id' => $newId,
+                ':projectId' => $data['projectId'],
+                ':issuenum' => $newCounter,
+                ':summary' => $data['summary'],
+                ':description' => $data['description'],
+                ':issuetype' => $data['issuetype'],
+                ':priority' => $data['priority'],
+                ':reporter' => $data['reporter'],
+                ':assignee' => empty($data['assignee']) ? null : $data['assignee']
+            ];
+
+            $stmt->execute($params);
+            return $newId;
+
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            throw new Exception("Failed to create issue: " . $e->getMessage());
+        }
+    }
+
+    public function deleteIssue($id) {
+        try {
+            // First delete any links to/from this issue
+            $stmt = $this->db->prepare("DELETE FROM ISSUELINK WHERE SOURCE = :id OR DESTINATION = :id");
+            $stmt->execute([':id' => $id]);
+
+            // Delete any history entries
+            $stmt = $this->db->prepare("
+                DELETE FROM CHANGEITEM WHERE GROUPID IN (
+                    SELECT ID FROM CHANGEGROUP WHERE ISSUEID = :id
+                )
+            ");
+            $stmt->execute([':id' => $id]);
+            
+            $stmt = $this->db->prepare("DELETE FROM CHANGEGROUP WHERE ISSUEID = :id");
+            $stmt->execute([':id' => $id]);
+
+            // Finally delete the issue itself
+            $stmt = $this->db->prepare("DELETE FROM JIRAISSUE WHERE ID = :id");
+            $stmt->execute([':id' => $id]);
+
+            return true;
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            throw new Exception("Failed to delete issue");
+        }
     }
 }

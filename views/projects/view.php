@@ -23,11 +23,9 @@ include 'views/templates/header.php';
                     <a href="index.php?page=projects&action=board&id=<?= $project['ID'] ?>" class="btn btn-outline-primary">
                         <i class="fas fa-columns"></i> Board View
                     </a>
-                    <?php if ($project['DESCRIPTION']): ?>
-                        <button type="button" class="btn btn-outline-info" data-toggle="tooltip" title="<?= htmlspecialchars($project['DESCRIPTION']) ?>">
-                            <i class="fas fa-info-circle"></i> Info
-                        </button>
-                    <?php endif; ?>
+                    <a href="index.php?page=issues&action=create&projectId=<?= $project['ID'] ?>" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Issue
+                    </a>
                 </div>
             </div>
             <div class="card-body">
@@ -248,10 +246,48 @@ document.addEventListener('DOMContentLoaded', function() {
                        class="btn btn-sm btn-primary">
                         <i class="fas fa-eye"></i> View
                     </a>
+                    <a href="index.php?page=issues&action=edit&id=${issue.ID}" 
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger delete-issue" 
+                            data-issue-id="${issue.ID}"
+                            data-issue-key="${project.PKEY}-${issue.ID}">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             </tr>
         `).join('');
+        
+        // Reattach delete handlers after rendering
+        //attachDeleteHandlers();
     }
+
+    // function attachDeleteHandlers() {
+    //     document.querySelectorAll('.delete-issue').forEach(button => {
+    //         button.addEventListener('click', function(e) {
+    //             e.preventDefault();
+    //             const issueId = this.dataset.issueId;
+    //             // if (confirm('Are you sure you want to delete this issue?')) {
+    //             //     fetch(`index.php?page=issues&action=delete&id=${issueId}`, {
+    //             //         method: 'POST'
+    //             //     })
+    //             //     .then(response => response.json())
+    //             //     .then(data => {
+    //             //         if (data.success) {
+    //             //             this.closest('tr').remove();
+    //             //         } else {
+    //             //             alert(data.error || 'Failed to delete issue');
+    //             //         }
+    //             //     })
+    //             //     .catch(error => {
+    //             //         console.error('Error:', error);
+    //             //         alert('Failed to delete issue');
+    //             //     });
+    //             // }
+    //         });
+    //     });
+    //}
 
     function filterIssues() {
         const searchTerm = filterInput.value.toLowerCase();
@@ -318,6 +354,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initial render
     renderIssues(issues);
+
+    // Add delete functionality to the buttons
+    document.querySelectorAll('.delete-issue').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const issueId = this.dataset.issueId;
+            const issueKey = this.dataset.issueKey;
+            if (confirm(`Are you sure you want to delete issue ${issueKey}?`)) {
+                fetch(`index.php?page=issues&action=delete&id=${issueId}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.closest('tr').remove();
+                    } else {
+                        alert(data.error || 'Failed to delete issue');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to delete issue');
+                });
+            }
+        });
+    });
 });
 </script>
 

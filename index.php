@@ -71,6 +71,18 @@ try {
                 if ($id === null) throw new Exception("Issue ID required");
                 $controller->addComment($id);
                 break;
+            case 'create':
+                $controller->create();
+                break;
+            case 'store':
+                $controller->store();
+                break;
+            case 'delete':
+                if ($id === null) throw new Exception("Issue ID required");
+                header('Content-Type: application/json');
+                echo json_encode($controller->delete($id));
+                exit;
+                break;
             default:
                 throw new Exception("Invalid action: $action");
         }

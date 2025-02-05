@@ -20,14 +20,7 @@ class User {
     }
 
     public function getAllUsers() {
-        $stmt = $this->db->prepare("
-            SELECT DISTINCT 
-                a.USER_KEY as username,
-                a.LOWER_USER_NAME
-            FROM APP_USER a
-            ORDER BY a.LOWER_USER_NAME ASC
-        ");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN, 0); // Only return the username column
+        $stmt = $this->db->query("SELECT USER_KEY, LOWER_USER_NAME FROM APP_USER ORDER BY LOWER_USER_NAME");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

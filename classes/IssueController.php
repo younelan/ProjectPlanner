@@ -145,5 +145,50 @@ class IssueController {
         echo json_encode($issues);
         exit;
     }
+
+    public function create() {
+        $projectId = isset($_GET['projectId']) ? (int)$_GET['projectId'] : null;
+        if (!$projectId) {
+            throw new Exception("Project ID is required");
+        }
+
+        $project = $this->projectModel->getProjectById($projectId);
+        if (!$project) {
+            throw new Exception("Project not found");
+        }
+
+        // Use the same method as edit to get data
+        $userModel = new User($this->db);
+        $users = $userModel->getAllUsers();
+
+        
+        $priorities = $this->issueModel->getAllPriorities();
+        $issueTypes = $this->issueModel->getAllIssueTypes();
+        
+        include 'views/issues/create.php';
+    }
+
+    public function store() {
+        if (!isset($_POST['projectId'])) {
+            throw new Exception("Project ID is required");
+        }
+
+        $issueId = $this->issueModel->createIssue($_POST);
+        
+        header("Location: index.php?page=issues&action=view&id=" . $issueId);
+        exit;
+    }
+
+    public function delete($id) {
+        try {
+            $result = $this->issueModel->deleteIssue($id);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
+    }
 }
 ?>

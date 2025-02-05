@@ -15,9 +15,14 @@ include 'views/templates/header.php';
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="fas fa-columns"></i> <?= htmlspecialchars($project['PNAME']) ?> Board</h2>
-            <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>" class="btn btn-outline-primary">
-                <i class="fas fa-list"></i> List View
-            </a>
+            <div>
+                <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>" class="btn btn-outline-primary">
+                    <i class="fas fa-list"></i> List View
+                </a>
+                <a href="index.php?page=issues&action=create&projectId=<?= $project['ID'] ?>" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Issue
+                </a>
+            </div>
         </div>
 
         <div class="row flex-nowrap overflow-auto pb-3">
