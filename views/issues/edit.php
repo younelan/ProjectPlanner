@@ -60,7 +60,7 @@ include 'views/templates/header.php';
                     </div>
 
                     <div class="form-group">
-                        <label for="issuetype">Type</label>
+                        <label for="issuetype">Issue Type</label>
                         <select class="form-control" id="issuetype" name="issuetype">
                             <?php foreach ($issueTypes as $type): ?>
                                 <option value="<?= htmlspecialchars($type['ID']) ?>"

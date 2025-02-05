@@ -92,8 +92,11 @@ include 'views/templates/header.php';
 
         <?php if (!empty($linkedIssues)): ?>
         <div class="card mb-4">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">Linked Issues</h3>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#linkIssueModal">
+                    <i class="fas fa-link"></i> Add Link
+                </button>
             </div>
             <div class="card-body">
                 <table class="table table-bordered table-striped">
@@ -121,6 +124,44 @@ include 'views/templates/header.php';
             </div>
         </div>
         <?php endif; ?>
+
+        <!-- Link Issue Modal -->
+        <?php if (!isset($linkTypes)) { $linkTypes = []; } ?>
+        <div class="modal fade" id="linkIssueModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Link Issue</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <form action="index.php?page=issues&action=addLink&id=<?= $issue['ID'] ?>" method="POST">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="linkType">Link Type</label>
+                                <select class="form-control" id="linkType" name="linkType" required>
+                                    <?php foreach ($linkTypes as $type): ?>
+                                        <option value="<?= htmlspecialchars($type['ID']) ?>">
+                                            <?= htmlspecialchars($type['LINKNAME']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="linkedIssueId">Issue ID</label>
+                                <input type="text" class="form-control" id="linkedIssueId" name="linkedIssueId"
+                                       placeholder="Enter issue ID" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add Link</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
         <!-- Add Comment Form -->
         <div class="card mb-4">

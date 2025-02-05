@@ -44,6 +44,8 @@ try {
             $controller->edit($id);
         } elseif ($action === 'update' && $id !== null) {
             $controller->update($id);
+        } elseif ($action === 'addLink' && $id !== null) {
+            $controller->addLink($id);
         } elseif ($action === 'list' && $id !== null) {
             $controller->list($id);
         } elseif ($action === 'search') {

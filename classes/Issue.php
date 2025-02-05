@@ -402,6 +402,7 @@ public function getProjectIssuesWithSubcomponents($projectId) {
                     ASSIGNEE = :assignee,
                     REPORTER = :reporter,
                     PRIORITY = :priority,
+                    ISSUETYPE = :issuetype,
                     UPDATED = CURRENT_TIMESTAMP
                 WHERE ID = :issueId
             ");
@@ -411,6 +412,7 @@ public function getProjectIssuesWithSubcomponents($projectId) {
                 'description' => $data['description'],
                 'assignee' => $data['assignee'],
                 'reporter' => $data['reporter'],
+                'issuetype' => $data['issuetype'],
                 'priority' => $data['priority'],
                 'issueId' => $issueId
             ]);
@@ -456,5 +458,46 @@ public function getProjectIssuesWithSubcomponents($projectId) {
             'oldValue' => $oldValue,
             'newValue' => $newValue
         ]);
+    }
+
+    public function getAllLinkTypes() {
+        $stmt = $this->db->prepare("
+            SELECT ID, LINKNAME, INWARD, OUTWARD
+            FROM ISSUELINKTYPE
+            ORDER BY ID
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function addIssueLink($sourceId, $targetId, $linkTypeId) {
+        try {
+            $this->db->beginTransaction();
+
+            // Get next ID for ISSUELINK
+            $nextLinkId = $this->db->query("SELECT COALESCE(MAX(ID), 0) + 1 FROM ISSUELINK")->fetchColumn();
+
+            $stmt = $this->db->prepare("
+                INSERT INTO ISSUELINK (ID, LINKTYPE, SOURCE, DESTINATION)
+                VALUES (:id, :linktype, :source, :destination)
+            ");
+            
+            $stmt->execute([
+                'id' => $nextLinkId,
+                'linktype' => $linkTypeId,
+                'source' => $sourceId,
+                'destination' => $targetId
+            ]);
+
+            // Log the change
+            $this->logChange($sourceId, 'link', '', "Added link to issue $targetId");
+
+            $this->db->commit();
+            return true;
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 }
