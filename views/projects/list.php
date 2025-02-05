@@ -8,11 +8,6 @@ include 'views/templates/header.php';
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h2 class="mb-0"><i class="fas fa-project-diagram"></i> Projects</h2>
-                <div>
-                    <a href="index.php?page=projects&action=board" class="btn btn-outline-primary">
-                        <i class="fas fa-columns"></i> Board View
-                    </a>
-                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -21,7 +16,7 @@ include 'views/templates/header.php';
                             <tr>
                                 <th width="10%"><i class="fas fa-key"></i> Key</th>
                                 <th width="40%">Name</th>
-                                <th width="20%"><i class="fas fa-user"></i> Lead</th>
+                                <!--<th width="20%"><i class="fas fa-user"></i> Lead</th>-->
                                 <th width="30%">Actions</th>
                             </tr>
                         </thead>
@@ -37,7 +32,7 @@ include 'views/templates/header.php';
                                         <?php endif; ?>
                                     </a>
                                 </td>
-                                <td><?= htmlspecialchars($project['LEAD']) ?></td>
+                                <!--<td><?= htmlspecialchars($project['LEAD']) ?></td>-->
                                 <td>
                                     <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>" 
                                        class="btn btn-sm btn-primary">

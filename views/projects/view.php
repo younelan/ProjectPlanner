@@ -179,6 +179,72 @@ a.text-dark:hover {
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    /* Table adjustments */
+    .table-responsive {
+        border: 0;
+        margin-bottom: 0;
+    }
+    
+    .table {
+        display: block;
+    }
+    
+    .table thead {
+        display: none; /* Hide headers on mobile */
+    }
+    
+    .table tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .table tbody td {
+        display: block;
+        text-align: left;
+        padding: 0.5rem;
+        border: none;
+    }
+    
+    /* Add labels before content */
+    .table tbody td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: inline-block;
+        width: 100px;
+    }
+
+    /* Button group adjustments */
+    .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+        white-space: nowrap;
+    }
+
+    /* Action buttons in table */
+    td:last-child {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-start;
+        padding-top: 1rem !important;
+    }
+
+    /* Filter input */
+    #issueFilter {
+        margin-bottom: 1rem;
+    }
+}
 </style>
 
 <script>
@@ -215,46 +281,48 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderIssues(filteredIssues) {
         tbody.innerHTML = filteredIssues.map(issue => `
             <tr>
-                <td data-value="${issue.ID}">
+                <td data-label="ID" data-value="${issue.ID}">
                     <span class="badge badge-secondary">
                         ${project.PKEY}-${issue.ID}
                     </span>
                 </td>
-                <td data-value="${issue.SUMMARY}">
+                <td data-label="Summary" data-value="${issue.SUMMARY}">
                     <a href="index.php?page=issues&action=view&id=${issue.ID}" class="text-dark">
                         ${issue.SUMMARY}
                     </a>
                 </td>
-                <td data-value="${issue.TYPE}">
+                <td data-label="Type" data-value="${issue.TYPE}">
                     <span class="badge badge-info">${issue.TYPE}</span>
                 </td>
-                <td data-value="${issue.STATUS}" data-status-order="${issue.STATUS_ORDER || 0}">
+                <td data-label="Status" data-value="${issue.STATUS}" data-status-order="${issue.STATUS_ORDER || 0}">
                     <span class="badge badge-${getStatusBadgeClass(issue.STATUS)}">
                         ${issue.STATUS}
                     </span>
                 </td>
-                <td data-value="${issue.ASSIGNEE || ''}">
+                <td data-label="Assignee" data-value="${issue.ASSIGNEE || ''}">
                     ${issue.ASSIGNEE ? `<i class="fas fa-user"></i> ${issue.ASSIGNEE}` : 
                     '<span class="text-muted"><i class="fas fa-user-slash"></i> Unassigned</span>'}
                 </td>
-                <td data-value="${issue.PRIORITY || ''}">
+                <td data-label="Priority" data-value="${issue.PRIORITY || ''}">
                     ${getPriorityIcon(issue.PRIORITY)}
                     ${issue.PRIORITY}
                 </td>
-                <td>
-                    <a href="index.php?page=issues&action=view&id=${issue.ID}" 
-                       class="btn btn-sm btn-primary">
-                        <i class="fas fa-eye"></i> View
-                    </a>
-                    <a href="index.php?page=issues&action=edit&id=${issue.ID}" 
-                       class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    <button class="btn btn-sm btn-outline-danger delete-issue" 
-                            data-issue-id="${issue.ID}"
-                            data-issue-key="${project.PKEY}-${issue.ID}">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <td data-label="Actions">
+                    <div class="btn-group">
+                        <a href="index.php?page=issues&action=view&id=${issue.ID}" 
+                           class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i><span class="d-none d-md-inline"> View</span>
+                        </a>
+                        <a href="index.php?page=issues&action=edit&id=${issue.ID}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i><span class="d-none d-md-inline"> Edit</span>
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger delete-issue" 
+                                data-issue-id="${issue.ID}"
+                                data-issue-key="${project.PKEY}-${issue.ID}">
+                            <i class="fas fa-trash"></i><span class="d-none d-md-inline"> Delete</span>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
