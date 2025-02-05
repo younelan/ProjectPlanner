@@ -210,4 +210,98 @@ public function getProjectIssuesWithSubcomponents($projectId) {
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function updateIssueStatus($issueId, $newStatus) {
+        try {
+            // First, get the status ID from the status name
+            $stmt = $this->db->prepare("
+                SELECT ID, PNAME FROM ISSUESTATUS WHERE PNAME = :status
+            ");
+            $stmt->execute(['status' => $newStatus]);
+            $status = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$status) {
+                throw new Exception('Invalid status: ' . $newStatus);
+            }
+
+            // Get the current status
+            $stmt = $this->db->prepare("
+                SELECT s.PNAME as old_status 
+                FROM JIRAISSUE i
+                JOIN ISSUESTATUS s ON i.ISSUESTATUS = s.ID
+                WHERE i.ID = :issueId
+            ");
+            $stmt->execute(['issueId' => $issueId]);
+            $oldStatus = $stmt->fetchColumn();
+
+            // Start transaction
+            $this->db->beginTransaction();
+
+            // Update the issue
+            $stmt = $this->db->prepare("
+                UPDATE JIRAISSUE 
+                SET ISSUESTATUS = :statusId,
+                    UPDATED = CURRENT_TIMESTAMP
+                WHERE ID = :issueId
+            ");
+            
+            $stmt->execute([
+                'statusId' => $status['ID'],
+                'issueId' => $issueId
+            ]);
+
+            // Log the change
+            $nextGroupId = $this->db->query("SELECT COALESCE(MAX(ID), 0) + 1 FROM CHANGEGROUP")->fetchColumn();
+            $nextItemId = $this->db->query("SELECT COALESCE(MAX(ID), 0) + 1 FROM CHANGEITEM")->fetchColumn();
+
+            $stmt = $this->db->prepare("
+                INSERT INTO CHANGEGROUP (ID, ISSUEID, AUTHOR, CREATED)
+                VALUES (:groupId, :issueId, 'system', CURRENT_TIMESTAMP)
+            ");
+            $stmt->execute([
+                'groupId' => $nextGroupId,
+                'issueId' => $issueId
+            ]);
+
+            $stmt = $this->db->prepare("
+                INSERT INTO CHANGEITEM (ID, GROUPID, FIELD, OLDSTRING, NEWSTRING)
+                VALUES (:itemId, :groupId, 'status', :oldStatus, :newStatus)
+            ");
+            $stmt->execute([
+                'itemId' => $nextItemId,
+                'groupId' => $nextGroupId,
+                'oldStatus' => $oldStatus,
+                'newStatus' => $status['PNAME']
+            ]);
+
+            $this->db->commit();
+            return true;
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    public function getIssuesForBoard($projectId) {
+        $stmt = $this->db->prepare("
+            SELECT 
+                i.*,
+                t.PNAME AS TYPE,
+                s.PNAME AS STATUS,
+                s.SEQUENCE AS STATUS_ORDER,
+                s.ID as STATUS_ID,
+                p.PKEY AS PROJECT_KEY,
+                p.ID AS PROJECT_ID,
+                p.PNAME AS PROJECT_NAME
+            FROM JIRAISSUE i
+            JOIN PROJECT p ON i.PROJECT = p.ID
+            LEFT JOIN ISSUETYPE t ON i.ISSUETYPE = t.ID
+            LEFT JOIN ISSUESTATUS s ON i.ISSUESTATUS = s.ID
+            WHERE i.PROJECT = :projectId
+            ORDER BY s.SEQUENCE, i.UPDATED DESC
+        ");
+        $stmt->execute(['projectId' => $projectId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

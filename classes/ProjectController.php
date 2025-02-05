@@ -51,7 +51,7 @@ class ProjectController {
         }
         
         // Get all issues for the project with their statuses
-        $issues = $this->issueModel->getIssuesByProject($id);
+        $issues = $this->issueModel->getIssuesForBoard($id);
         
         // Group issues by status
         $boardColumns = [];
