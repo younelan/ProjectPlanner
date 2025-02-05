@@ -9,16 +9,19 @@ This is what I like to release 0.02 , my 2 cents
 
 (c) Youness El Andaloussi
 
+As Is, No Warranties
+
 ## Functionality
 - View Project List
 - View Issue List and associated Issues
 - View Issue Details with link to associated Issues
+- Basic Edit Issue
+- Create/Delete Issue
+- Simple Board by State
+- Show Comment and task history
 
 ## Plans
-- Display comments
-- Add Limited edit of issues
 - Add Limited edit of projects
-- Add/ Remove related issues
 - Add Auth
 - Add template engine like simplicity
 - Templates/ Themes
