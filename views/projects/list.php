@@ -30,10 +30,12 @@ include 'views/templates/header.php';
                             <tr>
                                 <td><span class="badge badge-info"><?= htmlspecialchars($project['PKEY']) ?></span></td>
                                 <td>
-                                    <strong><?= htmlspecialchars($project['PNAME']) ?></strong>
-                                    <?php if ($project['DESCRIPTION']): ?>
-                                        <br><small class="text-muted"><?= htmlspecialchars($project['DESCRIPTION']) ?></small>
-                                    <?php endif; ?>
+                                    <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>" class="text-dark">
+                                        <?= htmlspecialchars($project['PNAME']) ?>
+                                        <?php if ($project['DESCRIPTION']): ?>
+                                            <br><small class="text-muted"><?= htmlspecialchars($project['DESCRIPTION']) ?></small>
+                                        <?php endif; ?>
+                                    </a>
                                 </td>
                                 <td><?= htmlspecialchars($project['LEAD']) ?></td>
                                 <td>
