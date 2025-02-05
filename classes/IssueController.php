@@ -47,5 +47,54 @@ class IssueController {
         $projects = $this->projectModel->getAllProjects();
         include 'views/issues/search.php';
     }
+
+    public function addComment($id) {
+        if (!isset($_POST['comment']) || empty(trim($_POST['comment']))) {
+            throw new Exception("Comment cannot be empty");
+        }
+
+        $comment = trim($_POST['comment']);
+        $this->issueModel->addHistoryEntry($id, $comment, User::getCurrentUser());
+
+        // Redirect back to issue view
+        header("Location: index.php?page=issues&action=view&id=" . $id);
+        exit;
+    }
+
+    public function edit($id) {
+        $issue = $this->issueModel->getIssueById($id);
+        if (!$issue) {
+            throw new Exception("Issue not found");
+        }
+
+        $userModel = new User($this->db);
+        $users = $userModel->getAllUsers();
+        $priorities = $this->issueModel->getAllPriorities();
+        $issueTypes = $this->issueModel->getAllIssueTypes();
+        
+        include 'views/issues/edit.php';
+    }
+
+    public function update($id) {
+        $issue = $this->issueModel->getIssueById($id);
+        if (!$issue) {
+            throw new Exception("Issue not found");
+        }
+
+        $changes = [
+            'summary' => ['old' => $issue['SUMMARY'], 'new' => $_POST['summary']],
+            'description' => ['old' => $issue['DESCRIPTION'], 'new' => $_POST['description']],
+            'assignee' => ['old' => $issue['ASSIGNEE'], 'new' => $_POST['assignee']],
+            'reporter' => ['old' => $issue['REPORTER'], 'new' => $_POST['reporter']],
+            'priority' => ['old' => $issue['PRIORITY'], 'new' => $_POST['priority']],
+            'issuetype' => ['old' => $issue['ISSUETYPE'], 'new' => $_POST['issuetype']],
+        ];
+
+        $data = array_merge($_POST, ['changes' => $changes]);
+        $this->issueModel->updateIssue($id, $data);
+        
+        header("Location: index.php?page=issues&action=view&id=" . $id);
+        exit;
+    }
 }
 ?>

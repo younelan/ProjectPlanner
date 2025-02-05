@@ -14,11 +14,16 @@ class Issue {
                 s.PNAME AS STATUS_NAME, 
                 s.ICONURL AS STATUS_ICON,
                 p.PKEY AS PROJECT_KEY,
-                p.PNAME AS PROJECT_NAME
+                p.PNAME AS PROJECT_NAME,
+                t.PNAME AS TYPE,
+                pr.PNAME AS PRIORITY_NAME,
+                pr.ICONURL AS PRIORITY_ICON,
+                pr.STATUS_COLOR AS PRIORITY_COLOR
             FROM JIRAISSUE i
+            JOIN PROJECT p ON i.PROJECT = p.ID
             JOIN ISSUETYPE t ON i.ISSUETYPE = t.ID
             JOIN ISSUESTATUS s ON i.ISSUESTATUS = s.ID
-            JOIN PROJECT p ON i.PROJECT = p.ID
+            LEFT JOIN PRIORITY pr ON i.PRIORITY = pr.ID
             WHERE i.ID = :id
         ");
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
@@ -309,5 +314,147 @@ public function getProjectIssuesWithSubcomponents($projectId) {
         ");
         $stmt->execute(['projectId' => $projectId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function addHistoryEntry($issueId, $comment, $author = null) {
+        try {
+            $this->db->beginTransaction();
+
+            // Get next IDs
+            $nextGroupId = $this->db->query("SELECT COALESCE(MAX(ID), 0) + 1 FROM CHANGEGROUP")->fetchColumn();
+            $nextItemId = $this->db->query("SELECT COALESCE(MAX(ID), 0) + 1 FROM CHANGEITEM")->fetchColumn();
+
+            // Use current user if no author specified
+            $author = $author ?: User::getCurrentUser();
+
+            // Create change group
+            $stmt = $this->db->prepare("
+                INSERT INTO CHANGEGROUP (ID, ISSUEID, AUTHOR, CREATED)
+                VALUES (:groupId, :issueId, :author, CURRENT_TIMESTAMP)
+            ");
+            $stmt->execute([
+                'groupId' => $nextGroupId,
+                'issueId' => $issueId,
+                'author' => $author
+            ]);
+
+            // Create change item for comment
+            $stmt = $this->db->prepare("
+                INSERT INTO CHANGEITEM (ID, GROUPID, FIELD, NEWSTRING)
+                VALUES (:itemId, :groupId, 'comment', :comment)
+            ");
+            $stmt->execute([
+                'itemId' => $nextItemId,
+                'groupId' => $nextGroupId,
+                'comment' => $comment
+            ]);
+
+            $this->db->commit();
+            return true;
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    public function getAllPriorities() {
+        $stmt = $this->db->prepare("
+            SELECT 
+                ID,
+                PNAME,
+                DESCRIPTION,
+                ICONURL,
+                SEQUENCE,
+                STATUS_COLOR
+            FROM PRIORITY
+            ORDER BY SEQUENCE ASC
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getAllIssueTypes() {
+        $stmt = $this->db->prepare("
+            SELECT 
+                ID,
+                PNAME,
+                DESCRIPTION,
+                ICONURL,
+                SEQUENCE
+            FROM ISSUETYPE
+            ORDER BY SEQUENCE ASC
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function updateIssue($issueId, $data) {
+        try {
+            $this->db->beginTransaction();
+
+            // Update issue
+            $stmt = $this->db->prepare("
+                UPDATE JIRAISSUE 
+                SET 
+                    SUMMARY = :summary,
+                    DESCRIPTION = :description,
+                    ASSIGNEE = :assignee,
+                    REPORTER = :reporter,
+                    PRIORITY = :priority,
+                    UPDATED = CURRENT_TIMESTAMP
+                WHERE ID = :issueId
+            ");
+            
+            $stmt->execute([
+                'summary' => $data['summary'],
+                'description' => $data['description'],
+                'assignee' => $data['assignee'],
+                'reporter' => $data['reporter'],
+                'priority' => $data['priority'],
+                'issueId' => $issueId
+            ]);
+
+            // Log changes
+            foreach ($data['changes'] as $field => $change) {
+                if ($change['old'] !== $change['new']) {
+                    $this->logChange($issueId, $field, $change['old'], $change['new']);
+                }
+            }
+
+            $this->db->commit();
+            return true;
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    private function logChange($issueId, $field, $oldValue, $newValue) {
+        $nextGroupId = $this->db->query("SELECT COALESCE(MAX(ID), 0) + 1 FROM CHANGEGROUP")->fetchColumn();
+        $nextItemId = $this->db->query("SELECT COALESCE(MAX(ID), 0) + 1 FROM CHANGEITEM")->fetchColumn();
+
+        $stmt = $this->db->prepare("
+            INSERT INTO CHANGEGROUP (ID, ISSUEID, AUTHOR, CREATED)
+            VALUES (:groupId, :issueId, :author, CURRENT_TIMESTAMP)
+        ");
+        $stmt->execute([
+            'groupId' => $nextGroupId,
+            'issueId' => $issueId,
+            'author' => User::getCurrentUser()
+        ]);
+
+        $stmt = $this->db->prepare("
+            INSERT INTO CHANGEITEM (ID, GROUPID, FIELD, OLDSTRING, NEWSTRING)
+            VALUES (:itemId, :groupId, :field, :oldValue, :newValue)
+        ");
+        $stmt->execute([
+            'itemId' => $nextItemId,
+            'groupId' => $nextGroupId,
+            'field' => $field,
+            'oldValue' => $oldValue,
+            'newValue' => $newValue
+        ]);
     }
 }

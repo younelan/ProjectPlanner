@@ -14,31 +14,78 @@ include 'views/templates/header.php';
         </nav>
 
         <div class="card mb-4">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h2 class="mb-0"><?= htmlspecialchars($issue['SUMMARY']) ?></h2>
+                <div>
+                    <a href="index.php?page=issues&action=edit&id=<?= $issue['ID'] ?>" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> Edit Issue
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <table class="table table-bordered">
-                    <tr>
-                        <th>ID</th>
-                        <td><?php echo htmlspecialchars($issue['ID']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Summary</th>
-                        <td><?php echo htmlspecialchars($issue['SUMMARY']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Status</th>
-                        <td>
-                            <span class="badge" style="background-color: #<?php echo htmlspecialchars($issue['STATUS_ICON']); ?>">
-                                <?php echo htmlspecialchars($issue['STATUS_NAME']); ?>
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Priority</th>
-                        <td><?php echo htmlspecialchars($issue['PRIORITY']); ?></td>
-                    </tr>
+                    <tbody>
+                        <tr>
+                            <th width="20%">ID</th>
+                            <td><?= htmlspecialchars($issue['PROJECT_KEY'] . '-' . $issue['ID']) ?></td>
+                        </tr>
+                        <tr>
+                            <th>Summary</th>
+                            <td><?= htmlspecialchars($issue['SUMMARY']) ?></td>
+                        </tr>
+                        <tr>
+                            <th>Description</th>
+                            <td><?= nl2br(htmlspecialchars($issue['DESCRIPTION'] ?: 'No description provided')) ?></td>
+                        </tr>
+                        <tr>
+                            <th>Type</th>
+                            <td>
+                                <span class="badge badge-info">
+                                    <?= htmlspecialchars($issue['TYPE']) ?>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Status</th>
+                            <td>
+                                <span class="badge" style="background-color: #<?= htmlspecialchars($issue['STATUS_ICON']) ?>">
+                                    <?= htmlspecialchars($issue['STATUS_NAME']) ?>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Priority</th>
+                            <td>
+                                <span class="badge" style="background-color: #<?= htmlspecialchars($issue['PRIORITY_COLOR']) ?>">
+                                    <?= htmlspecialchars($issue['PRIORITY_NAME']) ?>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Assignee</th>
+                            <td>
+                                <?php if ($issue['ASSIGNEE']): ?>
+                                    <i class="fas fa-user"></i> <?= htmlspecialchars($issue['ASSIGNEE']) ?>
+                                <?php else: ?>
+                                    <span class="text-muted"><i class="fas fa-user-slash"></i> Unassigned</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Reporter</th>
+                            <td>
+                                <i class="fas fa-user"></i> <?= htmlspecialchars($issue['REPORTER'] ?: 'Unknown') ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Created</th>
+                            <td><?= htmlspecialchars(date('Y-m-d H:i:s', strtotime($issue['CREATED']))) ?></td>
+                        </tr>
+                        <tr>
+                            <th>Updated</th>
+                            <td><?= htmlspecialchars(date('Y-m-d H:i:s', strtotime($issue['UPDATED']))) ?></td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -74,6 +121,24 @@ include 'views/templates/header.php';
             </div>
         </div>
         <?php endif; ?>
+
+        <!-- Add Comment Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="mb-0">Add Comment</h3>
+            </div>
+            <div class="card-body">
+                <form action="index.php?page=issues&action=addComment&id=<?= $issue['ID'] ?>" method="POST">
+                    <div class="form-group">
+                        <textarea name="comment" class="form-control" rows="3" required 
+                                placeholder="Enter your comment..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Comment
+                    </button>
+                </form>
+            </div>
+        </div>
 
         <div class="card">
             <div class="card-header">

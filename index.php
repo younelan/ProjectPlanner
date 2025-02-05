@@ -4,6 +4,7 @@ require_once 'config.php';
 
 // Explicitly include necessary classes
 require_once 'classes/Database.php';
+require_once 'classes/User.php';  // Add this line
 require_once 'classes/Project.php';
 require_once 'classes/Issue.php';
 require_once 'classes/ProjectController.php';
@@ -39,10 +40,16 @@ try {
         $controller = new IssueController($db);
         if ($action === 'view' && $id !== null) {
             $controller->view($id);
-        }elseif ($action === 'list' && $id !== null) {
+        } elseif ($action === 'edit' && $id !== null) {
+            $controller->edit($id);
+        } elseif ($action === 'update' && $id !== null) {
+            $controller->update($id);
+        } elseif ($action === 'list' && $id !== null) {
             $controller->list($id);
         } elseif ($action === 'search') {
             $controller->search();
+        } elseif ($action === 'addComment' && $id !== null) {
+            $controller->addComment($id);
         } else {
             throw new Exception("Invalid action '$action' for issues.");
         }
