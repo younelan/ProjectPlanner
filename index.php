@@ -37,6 +37,10 @@ try {
         $controller = new IssueController($db);
         if ($action === 'view' && $id !== null) {
             $controller->view($id);
+        }elseif ($action === 'list' && $id !== null) {
+            $controller->list($id);
+        } elseif ($action === 'search') {
+            $controller->search();
         } else {
             throw new Exception("Invalid action '$action' for issues.");
         }

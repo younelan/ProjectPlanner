@@ -175,4 +175,39 @@ public function getProjectIssuesWithSubcomponents($projectId) {
         $stmt->execute(['issueId' => $issueId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function searchIssues($searchTerm = '', $projectId = null) {
+        $sql = "
+            SELECT 
+                i.*, 
+                p.PKEY as PROJECT_KEY,
+                t.PNAME as TYPE,
+                s.PNAME as STATUS,
+                s.ICONURL as STATUS_ICON
+            FROM JIRAISSUE i
+            LEFT JOIN PROJECT p ON i.PROJECT = p.ID
+            LEFT JOIN ISSUETYPE t ON i.ISSUETYPE = t.ID
+            LEFT JOIN ISSUESTATUS s ON i.ISSUESTATUS = s.ID
+            WHERE 1=1
+        ";
+        $params = [];
+        
+        if ($searchTerm) {
+            $sql .= " AND (i.SUMMARY LIKE ? OR i.DESCRIPTION LIKE ?)";
+            $searchTerm = "%$searchTerm%";
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+        
+        if ($projectId) {
+            $sql .= " AND i.PROJECT = ?";
+            $params[] = $projectId;
+        }
+        
+        $sql .= " ORDER BY i.ID DESC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
