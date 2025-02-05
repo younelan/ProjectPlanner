@@ -30,6 +30,8 @@ try {
             $controller->index();
         } elseif ($action === 'view' && $id !== null) {
             $controller->view($id);
+        } elseif ($action === 'board' && $id !== null) {
+            $controller->board($id);
         } else {
             throw new Exception("Invalid action '$action' for projects.");
         }

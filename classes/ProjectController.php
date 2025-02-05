@@ -44,6 +44,28 @@ class ProjectController {
         include 'views/projects/view.php';
     }
 
+    public function board($id) {
+        $project = $this->projectModel->getProjectById($id);
+        if (!$project) {
+            throw new Exception("Project not found");
+        }
+        
+        // Get all issues for the project with their statuses
+        $issues = $this->issueModel->getIssuesByProject($id);
+        
+        // Group issues by status
+        $boardColumns = [];
+        foreach ($issues as $issue) {
+            $status = $issue['STATUS'] ?? 'To Do';
+            if (!isset($boardColumns[$status])) {
+                $boardColumns[$status] = [];
+            }
+            $boardColumns[$status][] = $issue;
+        }
+        
+        include 'views/projects/board.php';
+    }
+
     private function getProjectDetails($projectId) {
         // Example SQL to fetch project details
         $query = "SELECT * FROM PROJECT WHERE ID = :projectId";
