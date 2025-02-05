@@ -48,6 +48,8 @@ try {
             $controller->addLink($id);
         } elseif ($action === 'list' && $id !== null) {
             $controller->list($id);
+        } elseif ($action === 'autocompleteIssues' ) {
+            $controller->autocompleteIssues();
         } elseif ($action === 'search') {
             $controller->search();
         } elseif ($action === 'addComment' && $id !== null) {

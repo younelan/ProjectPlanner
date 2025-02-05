@@ -20,6 +20,7 @@ class IssueController {
         $project = $this->projectModel->getProjectById($issue['PROJECT']);
         $linkedIssues = $this->issueModel->getLinkedIssues($issue['ID']);
         $history = $this->issueModel->getIssueHistory($id);
+        $linkTypes = $this->issueModel->getAllLinkTypes();
         
         include 'views/issues/view.php';
     }
@@ -94,6 +95,45 @@ class IssueController {
         $this->issueModel->updateIssue($id, $data);
         
         header("Location: index.php?page=issues&action=view&id=" . $id);
+        exit;
+    }
+
+    public function addLink($id) {
+        if (!isset($_POST['linkedIssueId']) || !isset($_POST['linkType'])) {
+            throw new Exception("Missing required fields");
+        }
+
+        $this->issueModel->addIssueLink(
+            $id,
+            $_POST['linkedIssueId'],
+            $_POST['linkType']
+        );
+
+        header("Location: index.php?page=issues&action=view&id=" . $id);
+        exit;
+    }
+
+    public function deleteLink($id) {
+        if (!isset($_POST['linkId'])) {
+            throw new Exception("Link ID is required");
+        }
+
+        $this->issueModel->deleteIssueLink($_POST['linkId']);
+        
+        // Return JSON response for AJAX request
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    public function autocompleteIssues() {
+        $term = $_GET['term'] ?? '';
+        $projectId = $_GET['projectId'] ?? null;
+        
+        $issues = $this->issueModel->searchIssuesForAutocomplete($term, $projectId);
+        
+        header('Content-Type: application/json');
+        echo json_encode($issues);
         exit;
     }
 }

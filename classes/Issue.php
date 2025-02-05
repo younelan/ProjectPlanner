@@ -500,4 +500,34 @@ public function getProjectIssuesWithSubcomponents($projectId) {
             throw $e;
         }
     }
+
+    public function deleteIssueLink($linkId) {
+        $stmt = $this->db->prepare("DELETE FROM ISSUELINK WHERE ID = :linkId");
+        return $stmt->execute(['linkId' => $linkId]);
+    }
+
+    public function searchIssuesForAutocomplete($term, $projectId) {
+        $sql = "
+            SELECT 
+                i.ID,
+                i.SUMMARY,
+                p.PKEY as PROJECT_KEY,
+                CONCAT(p.PKEY, '-', i.ID, ': ', i.SUMMARY) as LABEL
+            FROM JIRAISSUE i
+            JOIN PROJECT p ON i.PROJECT = p.ID
+            WHERE i.PROJECT = :projectId
+            AND (
+                i.SUMMARY LIKE :term 
+                OR CONCAT(p.PKEY, '-', i.ID) LIKE :term
+            )
+            LIMIT 10
+        ";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'projectId' => $projectId,
+            'term' => "%$term%"
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

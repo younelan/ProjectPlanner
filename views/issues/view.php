@@ -90,7 +90,6 @@ include 'views/templates/header.php';
             </div>
         </div>
 
-        <?php if (!empty($linkedIssues)): ?>
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">Linked Issues</h3>
@@ -98,6 +97,7 @@ include 'views/templates/header.php';
                     <i class="fas fa-link"></i> Add Link
                 </button>
             </div>
+            <?php if (!empty($linkedIssues)): ?>
             <div class="card-body">
                 <table class="table table-bordered table-striped">
                     <thead>
@@ -105,6 +105,7 @@ include 'views/templates/header.php';
                             <th>Issue ID</th>
                             <th>Link Name</th>
                             <th>Link Type</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -117,13 +118,19 @@ include 'views/templates/header.php';
                                 </td>
                                 <td><?php echo htmlspecialchars($link['LINK_NAME']); ?></td>
                                 <td><strong><?php echo htmlspecialchars($link['TYPE']); ?></strong></td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger delete-link" 
+                                            data-link-id="<?php echo htmlspecialchars($link['ID']); ?>">
+                                        <i class="fas fa-unlink"></i> Remove
+                                    </button>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
 
         <!-- Link Issue Modal -->
         <?php if (!isset($linkTypes)) { $linkTypes = []; } ?>
@@ -149,9 +156,10 @@ include 'views/templates/header.php';
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="linkedIssueId">Issue ID</label>
-                                <input type="text" class="form-control" id="linkedIssueId" name="linkedIssueId"
-                                       placeholder="Enter issue ID" required>
+                                <label for="linkedIssueId">Search Issue</label>
+                                <input type="text" class="form-control" id="issueSearch" 
+                                       placeholder="Start typing to search issues...">
+                                <input type="hidden" id="linkedIssueId" name="linkedIssueId" required>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -212,5 +220,39 @@ include 'views/templates/header.php';
         </div>
     </div>
 </div>
+
+<!-- Add JavaScript for autocomplete and delete functionality -->
+<script>
+    $(document).ready(function() {
+        // Initialize autocomplete
+        $("#issueSearch").autocomplete({
+            source: "index.php?page=issues&action=autocompleteIssues&projectId=<?= $issue['PROJECT'] ?>",
+            minLength: 2,
+            select: function(event, ui) {
+                $("#linkedIssueId").val(ui.item.ID);
+                return false;
+            }
+        }).autocomplete("instance")._renderItem = function(ul, item) {
+            return $("<li>")
+                .append("<div>" + item.LABEL + "</div>")
+                .appendTo(ul);
+        };
+
+        // Handle delete link
+        $(".delete-link").click(function() {
+            const linkId = $(this).data('link-id');
+            if (confirm('Are you sure you want to remove this link?')) {
+                $.post('index.php?page=issues&action=deleteLink&id=<?= $issue['ID'] ?>', 
+                    { linkId: linkId },
+                    function(response) {
+                        if (response.success) {
+                            location.reload();
+                        }
+                    }
+                );
+            }
+        });
+    });
+</script>
 
 <?php include 'views/templates/footer.php'; ?>
