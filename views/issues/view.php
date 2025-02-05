@@ -69,6 +69,33 @@
             <p>No linked issues available.</p>
         <?php endif; ?>
 
+        <!-- Issue History Section -->
+        <div class="issue-history">
+            <h3>Issue History</h3>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Author</th>
+                        <th>Field</th>
+                        <th>From</th>
+                        <th>To</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($history as $change): ?>
+                        <tr>
+                            <td><?= htmlspecialchars(date('Y-m-d H:i:s', strtotime($change['CREATED']))) ?></td>
+                            <td><?= htmlspecialchars($change['AUTHOR']) ?></td>
+                            <td><?= htmlspecialchars($change['FIELD']) ?></td>
+                            <td><?= htmlspecialchars($change['OLDSTRING'] ?: '-') ?></td>
+                            <td><?= htmlspecialchars($change['NEWSTRING'] ?: '-') ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+
     </div>
 
     <!-- Include Bootstrap JS and dependencies -->

@@ -7,11 +7,9 @@ class IssueController {
         $this->issueModel = new Issue($db);
     }
     public function view($id) {
-        $issueModel = new Issue($this->db); // Pass the database connection to the Issue class.
-        //$issueDetails = $issueModel->getIssueById($id);
-        $issue = $issueModel->getIssueById($id);
-        $linkedIssues = $this->issueModel->getLinkedIssues($issue['ID']); // Fetch linked issues
-        //print_r($linkedIssues);exit;
+        $issue = $this->issueModel->getIssueById($id);
+        $linkedIssues = $this->issueModel->getLinkedIssues($issue['ID']);
+        $history = $this->issueModel->getIssueHistory($id);
         include 'views/issues/view.php';
     }
     

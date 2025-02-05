@@ -156,4 +156,23 @@ public function getProjectIssuesWithSubcomponents($projectId) {
         return $links;
     }        
 
+    public function getIssueHistory($issueId) {
+        $sql = "
+            SELECT 
+                cg.ID as change_group_id,
+                cg.AUTHOR,
+                cg.CREATED,
+                ci.FIELD,
+                ci.OLDSTRING,
+                ci.NEWSTRING
+            FROM CHANGEGROUP cg
+            JOIN CHANGEITEM ci ON cg.ID = ci.GROUPID
+            WHERE cg.ISSUEID = :issueId
+            ORDER BY cg.CREATED DESC, ci.ID
+        ";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['issueId' => $issueId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
