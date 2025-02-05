@@ -157,9 +157,13 @@ include 'views/templates/header.php';
                             </div>
                             <div class="form-group">
                                 <label for="linkedIssueId">Search Issue</label>
-                                <input type="text" class="form-control" id="issueSearch" 
-                                       placeholder="Start typing to search issues...">
-                                <input type="hidden" id="linkedIssueId" name="linkedIssueId" required>
+                                <div class="dropdown">
+                                    <input type="text" class="form-control" id="issueSearch" 
+                                           autocomplete="off"
+                                           placeholder="Start typing issue number or title...">
+                                    <ul id="searchResults" class="dropdown-menu w-100"></ul>
+                                    <input type="hidden" id="linkedIssueId" name="linkedIssueId" required>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -223,36 +227,110 @@ include 'views/templates/header.php';
 
 <!-- Add JavaScript for autocomplete and delete functionality -->
 <script>
-    $(document).ready(function() {
-        // Initialize autocomplete
-        $("#issueSearch").autocomplete({
-            source: "index.php?page=issues&action=autocompleteIssues&projectId=<?= $issue['PROJECT'] ?>",
-            minLength: 2,
-            select: function(event, ui) {
-                $("#linkedIssueId").val(ui.item.ID);
-                return false;
-            }
-        }).autocomplete("instance")._renderItem = function(ul, item) {
-            return $("<li>")
-                .append("<div>" + item.LABEL + "</div>")
-                .appendTo(ul);
-        };
-
-        // Handle delete link
-        $(".delete-link").click(function() {
-            const linkId = $(this).data('link-id');
-            if (confirm('Are you sure you want to remove this link?')) {
-                $.post('index.php?page=issues&action=deleteLink&id=<?= $issue['ID'] ?>', 
-                    { linkId: linkId },
-                    function(response) {
-                        if (response.success) {
-                            location.reload();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Delete link functionality
+        document.querySelectorAll('.delete-link').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const linkId = this.dataset.linkId;
+                if (confirm('Are you sure you want to remove this link?')) {
+                    fetch(`index.php?page=issues&action=deleteLink&id=<?= $issue['ID'] ?>&linkId=${linkId}`, {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            alert(data.error || 'Failed to delete link');
                         }
-                    }
-                );
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to delete link');
+                    });
+                }
+            });
+        });
+
+        // Issue search functionality
+        const searchInput = document.getElementById('issueSearch');
+        const searchResults = document.getElementById('searchResults');
+        const linkedIssueId = document.getElementById('linkedIssueId');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const term = this.value.trim();
+            
+            if (term.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                fetch(`index.php?page=issues&action=autocompleteIssues&projectId=<?= $issue['PROJECT'] ?>&term=${encodeURIComponent(term)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        searchResults.innerHTML = '';
+                        data.forEach(item => {
+                            const li = document.createElement('li');
+                            const a = document.createElement('a');
+                            a.classList.add('dropdown-item');
+                            a.href = '#';
+                            a.textContent = `${item.ID} - ${item.LABEL}`;
+                            a.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                searchInput.value = `${item.ID} - ${item.LABEL}`;
+                                linkedIssueId.value = item.ID;
+                                searchResults.style.display = 'none';
+                            });
+                            li.appendChild(a);
+                            searchResults.appendChild(li);
+                        });
+                        searchResults.style.display = data.length ? 'block' : 'none';
+                    });
+            }, 300);
+        });
+
+        // Hide search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target)) {
+                searchResults.style.display = 'none';
             }
         });
     });
 </script>
+
+<style>
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        max-height: 200px;
+        overflow-y: auto;
+        width: 100%;
+        z-index: 1000;
+        background: white;
+        border: 1px solid rgba(0,0,0,.15);
+        border-radius: .25rem;
+        padding: .5rem 0;
+        margin: .125rem 0 0;
+    }
+    .dropdown-item {
+        display: block;
+        padding: .25rem 1.5rem;
+        clear: both;
+        font-weight: 400;
+        color: #212529;
+        text-decoration: none;
+        white-space: normal;
+        word-wrap: break-word;
+    }
+    .dropdown-item:hover {
+        color: #16181b;
+        text-decoration: none;
+        background-color: #f8f9fa;
+    }
+</style>
 
 <?php include 'views/templates/footer.php'; ?>

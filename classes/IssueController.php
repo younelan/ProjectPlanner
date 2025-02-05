@@ -113,17 +113,26 @@ class IssueController {
         exit;
     }
 
-    public function deleteLink($id) {
-        if (!isset($_POST['linkId'])) {
-            throw new Exception("Link ID is required");
+    public function deleteLink($issueId, $linkId) {
+        if (!$linkId) {
+            return ['success' => false, 'error' => 'Link ID is required'];
         }
-
-        $this->issueModel->deleteIssueLink($_POST['linkId']);
         
-        // Return JSON response for AJAX request
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true]);
-        exit;
+        try {
+            $stmt = $this->db->prepare("DELETE FROM ISSUELINK WHERE ID = :linkId AND (SOURCE = :issueId OR DESTINATION = :issueId)");
+            $result = $stmt->execute([
+                ':linkId' => $linkId,
+                ':issueId' => $issueId
+            ]);
+            
+            if ($stmt->rowCount() > 0) {
+                return ['success' => true];
+            }
+            return ['success' => false, 'error' => 'Link not found'];
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            return ['success' => false, 'error' => 'Database error while deleting link'];
+        }
     }
 
     public function autocompleteIssues() {
