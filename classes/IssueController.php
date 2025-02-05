@@ -190,5 +190,60 @@ class IssueController {
         }
         exit;
     }
+
+    public function board($id) {
+        $project = $this->projectModel->getProjectById($id);
+        if (!$project) {
+            throw new Exception("Project not found");
+        }
+        
+        // Get all possible statuses
+        $allStatuses = $this->issueModel->getAllStatuses();
+        
+        // Get all issues for the project
+        $issues = $this->issueModel->getIssuesForBoard($id);
+        
+        // Get all users for assignment
+        $userModel = new User($this->db);
+        $users = $userModel->getAllUsers();
+        
+        // Initialize all status columns
+        $boardColumns = [];
+        foreach ($allStatuses as $status) {
+            $boardColumns[$status['ID']] = [];  // Changed from PNAME to ID
+        }
+        
+        // Fill in the issues
+        foreach ($issues as $issue) {
+            $statusId = $issue['STATUS'] ?? 'Open';  // Changed from status to statusId
+            $boardColumns[$statusId][] = $issue;
+        }
+        
+        include 'views/projects/board.php';
+    }
+
+    public function updateStatus() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('HTTP/1.1 405 Method Not Allowed');
+            exit;
+        }
+
+        $data = json_decode(file_get_contents('php://input'), true);
+        $issueId = $data['issueId'] ?? null;
+        $statusId = $data['statusId'] ?? null;  // Changed from status to statusId
+
+        if (!$issueId || !$statusId) {  // Check for statusId instead of status
+            echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+            exit;
+        }
+
+        try {
+            $this->issueModel->updateIssueStatus($issueId, $statusId);
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
 }
 ?>

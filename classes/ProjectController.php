@@ -17,6 +17,8 @@ class ProjectController {
     private $issueModel;
     private $db;
     public function __construct($db) {
+        // Ensure we store $db into $this->db so that $this->db is not null
+        $this->db = $db;
         $this->projectModel = new Project($db);
         $this->issueModel = new Issue($db);
         $this->pdo=$db;
@@ -48,19 +50,24 @@ class ProjectController {
         if (!$project) {
             throw new Exception("Project not found");
         }
-        
-        // Get all issues for the project with their statuses
-        $issues = $this->issueModel->getIssuesForBoard($id);
-        
-        // Group issues by status
-        $boardColumns = [];
-        foreach ($issues as $issue) {
-            $status = $issue['STATUS'] ?? 'To Do';
-            if (!isset($boardColumns[$status])) {
-                $boardColumns[$status] = [];
-            }
-            $boardColumns[$status][] = $issue;
+
+        if (isset($_GET['api'])) {
+            // API endpoint for board data
+            $workflowModel = new Workflow($this->db);
+            $workflowSteps = $workflowModel->getWorkflowSteps($project['ID']);
+            $issues = $this->issueModel->getIssuesForBoard($id);
+            
+            echo json_encode([
+                'workflow' => $workflowSteps,
+                'issues' => $issues,
+                'project' => $project
+            ]);
+            exit;
         }
+
+        // For initial page load, get workflow steps for the template
+        $workflowModel = new Workflow($this->db);
+        $workflowSteps = $workflowModel->getWorkflowSteps($project['ID']);
         
         include 'views/projects/board.php';
     }

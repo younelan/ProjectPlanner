@@ -6,6 +6,7 @@ require_once 'classes/Project.php';
 require_once 'classes/Issue.php';
 require_once 'classes/ProjectController.php';
 require_once 'classes/IssueController.php';
+require_once 'classes/Workflow.php';
 
 $db = Database::getInstance($config)->getConnection();
 $page = $_GET['page'] ?? 'projects';
@@ -25,6 +26,10 @@ try {
                 break;
             case 'board':
                 if ($id === null) throw new Exception("Project ID required");
+                // Handle both API and view requests in board method
+                if (isset($_GET['api'])) {
+                    header('Content-Type: application/json');
+                }
                 $controller->board($id);
                 break;
             default:
@@ -82,6 +87,10 @@ try {
                 header('Content-Type: application/json');
                 echo json_encode($controller->delete($id));
                 exit;
+                break;
+            case 'updateStatus':
+                header('Content-Type: application/json');
+                $controller->updateStatus();
                 break;
             default:
                 throw new Exception("Invalid action: $action");

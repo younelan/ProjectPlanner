@@ -98,36 +98,38 @@ include 'views/templates/header.php';
                 </button>
             </div>
             <?php if (!empty($linkedIssues)): ?>
-            <div class="card-body">
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>Issue ID</th>
-                            <th>Link Name</th>
-                            <th>Link Type</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($linkedIssues as $link): ?>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="linked-issues-table">
+                        <thead>
                             <tr>
-                                <td>
-                                    <a href="index.php?page=issues&action=view&id=<?php echo htmlspecialchars($link['LINK_ID']); ?>">
-                                        Issue <?php echo htmlspecialchars($link['LINK_ID']); ?>
-                                    </a>
-                                </td>
-                                <td><?php echo htmlspecialchars($link['LINK_NAME']); ?></td>
-                                <td><strong><?php echo htmlspecialchars($link['TYPE']); ?></strong></td>
-                                <td>
-                                    <button class="btn btn-sm btn-danger delete-link" 
-                                            data-link-id="<?php echo htmlspecialchars($link['ID']); ?>">
-                                        <i class="fas fa-unlink"></i> Remove
-                                    </button>
-                                </td>
+                                <th>Issue ID</th>
+                                <th>Link Name</th>
+                                <th>Link Type</th>
+                                <th>Actions</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($linkedIssues as $link): ?>
+                                <tr>
+                                    <td data-label="Issue ID">
+                                        <a href="index.php?page=issues&action=view&id=<?= htmlspecialchars($link['LINK_ID']) ?>">
+                                            Issue <?= htmlspecialchars($link['LINK_ID']) ?>
+                                        </a>
+                                    </td>
+                                    <td data-label="Link Name"><?= htmlspecialchars($link['LINK_NAME']) ?></td>
+                                    <td data-label="Link Type"><strong><?= htmlspecialchars($link['TYPE']) ?></strong></td>
+                                    <td data-label="Actions">
+                                        <button class="btn btn-sm btn-danger delete-link" 
+                                                data-link-id="<?= htmlspecialchars($link['ID']) ?>">
+                                            <i class="fas fa-unlink"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <?php endif; ?>
         </div>
@@ -197,29 +199,31 @@ include 'views/templates/header.php';
             <div class="card-header">
                 <h3 class="mb-0">History</h3>
             </div>
-            <div class="card-body">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Author</th>
-                            <th>Field</th>
-                            <th>From</th>
-                            <th>To</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($history as $change): ?>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="history-table">
+                        <thead>
                             <tr>
-                                <td><?= htmlspecialchars(date('Y-m-d H:i:s', strtotime($change['CREATED']))) ?></td>
-                                <td><?= htmlspecialchars($change['AUTHOR']) ?></td>
-                                <td><?= htmlspecialchars($change['FIELD']) ?></td>
-                                <td><?= htmlspecialchars($change['OLDSTRING'] ?: '-') ?></td>
-                                <td><?= htmlspecialchars($change['NEWSTRING'] ?: '-') ?></td>
+                                <th>Date</th>
+                                <th>Author</th>
+                                <th>Field</th>
+                                <th>From</th>
+                                <th>To</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($history as $change): ?>
+                                <tr>
+                                    <td data-label="Date"><?= htmlspecialchars(date('Y-m-d H:i:s', strtotime($change['CREATED']))) ?></td>
+                                    <td data-label="Author"><?= htmlspecialchars($change['AUTHOR']) ?></td>
+                                    <td data-label="Field"><?= htmlspecialchars($change['FIELD']) ?></td>
+                                    <td data-label="From"><?= htmlspecialchars($change['OLDSTRING'] ?: '-') ?></td>
+                                    <td data-label="To"><?= htmlspecialchars($change['NEWSTRING'] ?: '-') ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -303,34 +307,145 @@ include 'views/templates/header.php';
 </script>
 
 <style>
-    .dropdown-menu {
-        display: none;
-        position: absolute;
-        max-height: 200px;
-        overflow-y: auto;
-        width: 100%;
-        z-index: 1000;
-        background: white;
-        border: 1px solid rgba(0,0,0,.15);
-        border-radius: .25rem;
-        padding: .5rem 0;
-        margin: .125rem 0 0;
+/* Desktop improvements */
+.table-bordered {
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.table-bordered th {
+    background-color: #f8f9fa;
+    width: 200px;
+    vertical-align: middle;
+}
+
+.badge {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+}
+
+/* Tables in cards */
+.card .table {
+    margin-bottom: 0;
+}
+
+.card .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0,0,0,.02);
+}
+
+/* History and Links tables */
+.history-table, .linked-issues-table {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.history-table th, .linked-issues-table th {
+    background-color: #f8f9fa;
+    padding: 0.75rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.history-table td, .linked-issues-table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+    .table-responsive {
+        border: 0;
     }
-    .dropdown-item {
+    
+    .table-bordered {
+        border: none;
+    }
+
+    .table-bordered tr {
         display: block;
-        padding: .25rem 1.5rem;
-        clear: both;
-        font-weight: 400;
-        color: #212529;
-        text-decoration: none;
-        white-space: normal;
-        word-wrap: break-word;
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
     }
-    .dropdown-item:hover {
-        color: #16181b;
-        text-decoration: none;
+
+    .table-bordered th,
+    .table-bordered td {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 0.75rem;
+    }
+
+    .table-bordered th {
         background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
     }
+
+    /* History table mobile view */
+    .history-table thead {
+        display: none;
+    }
+
+    .history-table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 0.5rem;
+    }
+
+    .history-table td {
+        display: block;
+        text-align: left;
+        padding: 0.5rem;
+        border: none;
+    }
+
+    .history-table td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: inline-block;
+        width: 100px;
+    }
+
+    /* Linked issues table mobile view */
+    .linked-issues-table thead {
+        display: none;
+    }
+
+    .linked-issues-table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 0.5rem;
+    }
+
+    .linked-issues-table td {
+        display: block;
+        text-align: left;
+        padding: 0.5rem;
+        border: none;
+    }
+
+    .linked-issues-table td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: inline-block;
+        width: 120px;
+    }
+
+    /* Buttons in mobile view */
+    .btn-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .btn-sm {
+        flex: 1;
+    }
+}
 </style>
 
 <?php include 'views/templates/footer.php'; ?>
