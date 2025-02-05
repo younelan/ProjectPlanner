@@ -11,12 +11,15 @@ class Issue {
         $stmt = $this->db->prepare("
             SELECT 
                 i.*,
-
-                s.`PNAME` AS `STATUS_NAME`, s.`ICONURL` AS `STATUS_ICON`
-            FROM `JIRAISSUE` i
-            JOIN `ISSUETYPE` t ON i.`ISSUETYPE` = t.`ID`
-            JOIN `ISSUESTATUS` s ON i.`ISSUESTATUS` = s.`ID`
-            WHERE i.`ID` = :id
+                s.PNAME AS STATUS_NAME, 
+                s.ICONURL AS STATUS_ICON,
+                p.PKEY AS PROJECT_KEY,
+                p.PNAME AS PROJECT_NAME
+            FROM JIRAISSUE i
+            JOIN ISSUETYPE t ON i.ISSUETYPE = t.ID
+            JOIN ISSUESTATUS s ON i.ISSUESTATUS = s.ID
+            JOIN PROJECT p ON i.PROJECT = p.ID
+            WHERE i.ID = :id
         ");
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -27,15 +30,18 @@ class Issue {
     public function getIssuesByProject($projectId) {
         $stmt = $this->db->prepare("
             SELECT 
-                JIRAISSUE.*, 
-                ISSUETYPE.PNAME AS TYPE, 
-                ISSUESTATUS.PNAME AS STATUS,
-                ISSUESTATUS.ID AS STATUSID
-            FROM JIRAISSUE
-            JOIN ISSUETYPE ON JIRAISSUE.ISSUETYPE = ISSUETYPE.ID
-            LEFT JOIN ISSUESTATUS ON JIRAISSUE.ISSUESTATUS = ISSUESTATUS.ID
-            WHERE JIRAISSUE.PROJECT = ?
-            ORDER BY JIRAISSUE.ID
+                i.*, 
+                t.PNAME as TYPE,
+                s.PNAME as STATUS,
+                s.SEQUENCE as STATUS_ORDER,
+                s.ICONURL as STATUS_ICON,
+                p.PKEY as PROJECT_KEY
+            FROM JIRAISSUE i
+            LEFT JOIN ISSUETYPE t ON i.ISSUETYPE = t.ID
+            LEFT JOIN ISSUESTATUS s ON i.ISSUESTATUS = s.ID
+            LEFT JOIN PROJECT p ON i.PROJECT = p.ID
+            WHERE i.PROJECT = ?
+            ORDER BY s.SEQUENCE ASC, i.UPDATED DESC
         ");
         $stmt->execute([$projectId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

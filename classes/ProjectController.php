@@ -28,19 +28,18 @@ class ProjectController {
     }
 
     public function view($id) {
-        // Fetch project details and issues (including links) from the database
-        //$projectId = $_GET['id']; // Assuming project ID is passed in the URL
-        $projectId=$id;
-        // Fetch project details (replace with actual query)
-        $project = $this->getProjectDetails($projectId);
-
-        // Fetch issues for this project (replace with actual query)
-        $issues = $this->getIssuesForProject($projectId);
-
-        // Fetch issue links for all issues
+        $project = $this->projectModel->getProjectById($id);
+        if (!$project) {
+            throw new Exception("Project not found");
+        }
+        
+        if (empty($project['PKEY'])) {
+            throw new Exception("Invalid project configuration: missing PKEY");
+        }
+        
+        $issues = $this->issueModel->getIssuesByProject($project['ID']);
         $issuesWithLinks = $this->getIssueLinks($issues);
-
-        // Pass the data to the template
+        
         include 'views/projects/view.php';
     }
 
@@ -72,16 +71,6 @@ class ProjectController {
         $stmt = $this->pdo->prepare($query);
         $stmt->execute([':projectId' => $projectId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    private function getIssuesForProject($projectId) {
-        // Example SQL to fetch issues
-        $query = "SELECT i.*, t.PNAME as `TYPE` FROM JIRAISSUE i
-            LEFT JOIN ISSUETYPE t ON i.ISSUETYPE = t.ID
-            WHERE PROJECT = :projectId";
-        $stmt = $this->pdo->prepare($query);
-        $stmt->execute([':projectId' => $projectId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     private function getIssueLinks($issues) {

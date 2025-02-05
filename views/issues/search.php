@@ -23,9 +23,15 @@ include 'views/templates/header.php';
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <input type="text" name="q" class="form-control" 
+                                <input type="text" 
+                                       name="q" 
+                                       id="searchInput"
+                                       class="form-control" 
                                        placeholder="Search term..." 
-                                       value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+                                       value="<?= htmlspecialchars($_GET['q'] ?? '') ?>"
+                                       autocomplete="off">
+                                <div id="searchSuggestions" class="dropdown-menu" style="width: 100%">
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -90,5 +96,50 @@ include 'views/templates/header.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const suggestionBox = document.getElementById('searchSuggestions');
+    let debounceTimer;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const searchTerm = this.value;
+            if (searchTerm.length < 2) {
+                suggestionBox.style.display = 'none';
+                return;
+            }
+
+            fetch(`api/search_suggestions.php?term=${encodeURIComponent(searchTerm)}`)
+                .then(response => response.json())
+                .then(suggestions => {
+                    suggestionBox.innerHTML = '';
+                    suggestions.forEach(suggestion => {
+                        const item = document.createElement('a');
+                        item.className = 'dropdown-item';
+                        item.href = '#';
+                        item.textContent = suggestion.SUMMARY;
+                        item.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            searchInput.value = suggestion.SUMMARY;
+                            suggestionBox.style.display = 'none';
+                        });
+                        suggestionBox.appendChild(item);
+                    });
+                    suggestionBox.style.display = suggestions.length ? 'block' : 'none';
+                });
+        }, 300);
+    });
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target)) {
+            suggestionBox.style.display = 'none';
+        }
+    });
+});
+</script>
 
 <?php include 'views/templates/footer.php'; ?>

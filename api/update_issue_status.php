@@ -18,11 +18,7 @@ try {
     
     $success = $issueModel->updateIssueStatus($input['issueId'], $input['status']);
     
-    if ($success) {
-        echo json_encode(['success' => true]);
-    } else {
-        throw new Exception('Failed to update issue status');
-    }
+    echo json_encode(['success' => true]);
     
 } catch (Exception $e) {
     http_response_code(400);

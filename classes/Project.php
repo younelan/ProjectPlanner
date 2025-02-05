@@ -8,14 +8,27 @@ class Project {
 
     // Get all projects
     public function getAllProjects() {
-        $stmt = $this->db->prepare("SELECT * FROM PROJECT");
+        $stmt = $this->db->prepare("
+            SELECT 
+                p.ID,
+                p.PNAME,
+                p.PKEY,
+                p.LEAD,
+                p.DESCRIPTION
+            FROM PROJECT p
+            ORDER BY p.PKEY ASC
+        ");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     // Get a specific project by ID
     public function getProjectById($id) {
-        $stmt = $this->db->prepare("SELECT `ID`, `PNAME`, `DESCRIPTION`, `LEAD`, `URL` FROM PROJECT WHERE ID = :id");
+        $stmt = $this->db->prepare("
+            SELECT p.*
+            FROM PROJECT p
+            WHERE p.ID = :id
+        ");
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
