@@ -42,6 +42,11 @@ include 'views/templates/header.php';
                                        class="btn btn-sm btn-info">
                                         <i class="fas fa-columns"></i> Board
                                     </a>
+                                    <!-- New Edit button -->
+                                    <a href="index.php?page=projects&action=edit&id=<?= $project['ID'] ?>" 
+                                       class="btn btn-sm btn-secondary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
                                 </td>
                             </tr>
                             <?php endforeach; ?>

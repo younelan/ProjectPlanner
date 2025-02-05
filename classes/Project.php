@@ -44,5 +44,28 @@ class Project {
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function updateProject($id, $data) {
+        $query = "UPDATE PROJECT SET 
+                    PNAME = :PNAME, 
+                    URL = :URL,
+                    DESCRIPTION = :DESCRIPTION, 
+                    `LEAD` = :LEAD, 
+                    `PKEY` = :PKEY,
+                    PROJECTTYPE = :PROJECTTYPE,
+                    ORIGINALKEY = :ORIGINALKEY
+                  WHERE ID = :id";
+        $stmt = $this->db->prepare($query);
+        return $stmt->execute([
+            ':PNAME'       => $data['PNAME'],
+            ':URL'         => $data['URL'],
+            ':DESCRIPTION' => $data['DESCRIPTION'],
+            ':LEAD'        => $data['LEAD'],
+            ':PKEY'        => $data['PKEY'],
+            ':PROJECTTYPE' => $data['PROJECTTYPE'],
+            ':ORIGINALKEY' => $data['ORIGINALKEY'],
+            ':id'          => $id
+        ]);
+    }
 }
 ?>

@@ -72,6 +72,36 @@ class ProjectController {
         include 'views/projects/board.php';
     }
 
+    public function edit($id) {
+        $project = $this->projectModel->getProjectById($id);
+        if (!$project) {
+            throw new Exception("Project not found");
+        }
+        include __DIR__ . '/../views/projects/edit.php';
+    }
+    
+    public function update($id) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            throw new Exception("Invalid request method");
+        }
+        $data = [
+            'PNAME'       => $_POST['PNAME'] ?? '',
+            'URL'         => $_POST['URL'] ?? '',
+            'DESCRIPTION' => $_POST['DESCRIPTION'] ?? '',
+            'LEAD'        => $_POST['LEAD'] ?? '',
+            'PKEY'        => $_POST['PKEY'] ?? '',
+            'PROJECTTYPE' => $_POST['PROJECTTYPE'] ?? '',
+            'ORIGINALKEY' => $_POST['ORIGINALKEY'] ?? '',
+        ];
+        $updated = $this->projectModel->updateProject($id, $data);
+        if ($updated) {
+            header("Location: index.php?page=projects&action=view&id=" . $id);
+            exit;
+        } else {
+            throw new Exception("Update failed");
+        }
+    }
+
     private function getProjectDetails($projectId) {
         // Example SQL to fetch project details
         $query = "SELECT * FROM PROJECT WHERE ID = :projectId";

@@ -32,6 +32,15 @@ try {
                 }
                 $controller->board($id);
                 break;
+            // New edit and update actions
+            case 'edit':
+                if ($id === null) throw new Exception("Project ID required");
+                $controller->edit($id);
+                break;
+            case 'update':
+                if ($id === null) throw new Exception("Project ID required");
+                $controller->update($id);
+                break;
             default:
                 throw new Exception("Invalid action: $action");
         }
