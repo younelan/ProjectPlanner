@@ -11,6 +11,13 @@ This is what I like to release 0.02 , my 2 cents
 
 As Is, No Warranties
 
+## Install
+At this point, it relies on a Jira Database in MySQL (maybe postgres, untested)
+- Put the script in /var/www/html
+- Copy config.php.default to config.php
+- Edit config.php to point to your Jira Database
+ 
+
 ## Functionality
 - View Project List
 - View Issue List and associated Issues
