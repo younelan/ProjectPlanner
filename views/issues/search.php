@@ -1,5 +1,5 @@
 <?php 
-$pageTitle = 'Search Issues | Scrum Viewer';
+$pageTitle = 'Search Issues | Project Agile';
 include 'views/templates/header.php'; 
 ?>
 

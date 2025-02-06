@@ -9,7 +9,7 @@ footer {
 }
 </style>
 <footer>
-    <p class="mb-0">© 2023 Scrum Viewer</p>
+    <p class="mb-0">© 2025 Project Agile</p>
 </footer>
     
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

@@ -1,5 +1,5 @@
 <?php 
-$pageTitle = htmlspecialchars($project['PNAME']) . ' | Scrum Viewer';
+$pageTitle = htmlspecialchars($project['PNAME']) . ' | Project Agile';
 include 'views/templates/header.php'; 
 ?>
 
@@ -63,6 +63,18 @@ include 'views/templates/header.php';
     <div class="card-body">
         <div id="issueTypeFilters" class="d-flex flex-wrap gap-3">
             <!-- Issue type checkboxes will be dynamically added here -->
+        </div>
+    </div>
+</div>
+
+<!-- Add Status Filter Section -->
+<div class="card mt-3">
+    <div class="card-header">
+        <h5 class="mb-0">Filter by Status</h5>
+    </div>
+    <div class="card-body">
+        <div id="issueStatusFilters" class="d-flex flex-wrap gap-3">
+            <!-- Status checkboxes will be dynamically added here -->
         </div>
     </div>
 </div>
@@ -548,11 +560,52 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Update filterIssues function to include type filtering
+    // Add status filtering
+    const statusStorageKey = `projectViewSelectedStatuses-${project.ID}`;
+    let selectedStatuses = new Set(
+        JSON.parse(localStorage.getItem(statusStorageKey)) || 
+        issues.map(issue => issue.STATUS)
+    );
+
+    // Get unique statuses from issues array
+    const issueStatuses = [...new Set(issues.map(issue => issue.STATUS))];
+    
+    // Create and populate status filters
+    const statusFilterContainer = document.getElementById('issueStatusFilters');
+    issueStatuses.forEach(status => {
+        const div = document.createElement('div');
+        div.className = 'form-check';
+        div.innerHTML = `
+            <input class="form-check-input issue-status-filter" type="checkbox" 
+                   id="status-${status}" value="${status}" 
+                   ${selectedStatuses.has(status) ? 'checked' : ''}>
+            <label class="form-check-label" for="status-${status}">
+                <span class="badge badge-${getStatusBadgeClass(status)}">${status}</span>
+            </label>
+        `;
+        statusFilterContainer.appendChild(div);
+    });
+
+    // Add event listeners for status filters
+    document.querySelectorAll('.issue-status-filter').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                selectedStatuses.add(this.value);
+            } else {
+                selectedStatuses.delete(this.value);
+            }
+            // Save to localStorage
+            localStorage.setItem(statusStorageKey, JSON.stringify([...selectedStatuses]));
+            filterIssues();
+        });
+    });
+
+    // Update filterIssues function to include both type and status filtering
     function filterIssues() {
         const searchTerm = filterInput.value.toLowerCase();
         const filtered = issues.filter(issue => 
-            (selectedTypes.has(issue.TYPE)) && // Add type filter condition
+            selectedTypes.has(issue.TYPE) && 
+            selectedStatuses.has(issue.STATUS) &&
             (
                 issue.SUMMARY.toLowerCase().includes(searchTerm) ||
                 issue.TYPE.toLowerCase().includes(searchTerm) ||
