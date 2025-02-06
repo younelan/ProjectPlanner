@@ -350,7 +350,7 @@ public function getProjectIssuesWithSubcomponents($projectId) {
         try {
             $this->db->beginTransaction();
 
-            // Update issue
+            // Update issue including status
             $stmt = $this->db->prepare("
                 UPDATE JIRAISSUE 
                 SET 
@@ -360,6 +360,7 @@ public function getProjectIssuesWithSubcomponents($projectId) {
                     REPORTER = :reporter,
                     PRIORITY = :priority,
                     ISSUETYPE = :issuetype,
+                    ISSUESTATUS = :status,
                     UPDATED = CURRENT_TIMESTAMP
                 WHERE ID = :issueId
             ");
@@ -371,10 +372,11 @@ public function getProjectIssuesWithSubcomponents($projectId) {
                 'reporter' => $data['reporter'],
                 'issuetype' => $data['issuetype'],
                 'priority' => $data['priority'],
+                'status' => $data['status'],
                 'issueId' => $issueId
             ]);
 
-            // Log changes
+            // Log changes including status change
             foreach ($data['changes'] as $field => $change) {
                 if ($change['old'] !== $change['new']) {
                     $this->logChange($issueId, $field, $change['old'], $change['new']);
@@ -571,7 +573,7 @@ public function getProjectIssuesWithSubcomponents($projectId) {
                 ) VALUES (
                     :id, :projectId, :issuenum, :summary, :description,
                     :issuetype, :priority, :reporter, :assignee,
-                    NOW(), NOW(), 'Open'
+                    NOW(), NOW(), :status
                 )
             ");
 
@@ -584,7 +586,8 @@ public function getProjectIssuesWithSubcomponents($projectId) {
                 ':issuetype' => $data['issuetype'],
                 ':priority' => $data['priority'],
                 ':reporter' => $data['reporter'],
-                ':assignee' => empty($data['assignee']) ? null : $data['assignee']
+                ':assignee' => empty($data['assignee']) ? null : $data['assignee'],
+                ':status' => $data['status'] ?? 'Open'  // Use provided status or default to 'Open'
             ];
 
             $stmt->execute($params);

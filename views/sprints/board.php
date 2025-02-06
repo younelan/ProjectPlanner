@@ -213,10 +213,10 @@ include 'views/templates/header.php';
             <?= htmlspecialchars($sprint['NAME']) ?>
         </h2>
         <div>
+            <button type="button" class="btn btn-primary mr-2" data-toggle="modal" data-target="#createIssueModal">
+                <i class="fas fa-plus"></i> Create Issue
+            </button>
             <div class="btn-group">
-                <button type="button" id="viewToggle" class="btn btn-outline-primary simple-dropdown-toggle" onclick="toggleSimpleDropdown(this)">
-                    <i class="fas fa-eye"></i> View As
-                </button>
                 <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
                     <a class="dropdown-item" href="#" data-view="flow" onclick="selectView('flow'); return false;">Flow</a>
                     <a class="dropdown-item" href="#" data-view="tabbed" onclick="selectView('tabbed'); return false;">Tabbed View</a>

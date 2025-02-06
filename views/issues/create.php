@@ -73,6 +73,21 @@ include 'views/templates/header.php';
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
+                            <label for="status">Status</label>
+                            <select class="form-control" id="status" name="status" required>
+                                <?php foreach ($statuses as $status): ?>
+                                    <option value="<?= htmlspecialchars($status['ID']) ?>">
+                                        <?= htmlspecialchars($status['PNAME']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
                             <label for="reporter">Reporter</label>
                             <select class="form-control" id="reporter" name="reporter" required>
                                 <?php foreach ($users as $user): ?>

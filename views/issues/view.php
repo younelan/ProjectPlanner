@@ -35,7 +35,7 @@ include 'views/templates/header.php';
                         </tr>
                         <tr>
                             <th>Description</th>
-                            <td><?= nl2br(htmlspecialchars($issue['DESCRIPTION'] ?: 'No description provided')) ?></td>
+                            <td><?= nl2br($issue['DESCRIPTION'] ?: 'No description provided') ?></td>
                         </tr>
                         <tr>
                             <th>Type</th>
@@ -445,6 +445,33 @@ include 'views/templates/header.php';
     .btn-sm {
         flex: 1;
     }
+}
+
+/* New markup styles */
+blockquote {
+    border-left: 4px solid #e0e0e0;
+    margin: 1em 0;
+    padding: 0.5em 1em;
+    background-color: #f8f9fa;
+}
+
+cite {
+    font-style: italic;
+    color: #666;
+}
+
+del {
+    color: #dc3545;
+    text-decoration: line-through;
+}
+
+ins {
+    color: #28a745;
+    text-decoration: underline;
+}
+
+sup, sub {
+    font-size: 75%;
 }
 </style>
 

@@ -142,17 +142,34 @@ select.form-control {
                         <textarea class="form-control" id="description" name="description" rows="3"><?= htmlspecialchars($issue['DESCRIPTION']) ?></textarea>
                     </div>
 
-                    <div class="form-group">
-                        <label for="assignee">Assignee</label>
-                        <select class="form-control" id="assignee" name="assignee">
-                            <option value="">Unassigned</option>
-                                <?php foreach ($users as $user): ?>
-                                    <option value="<?= htmlspecialchars($user['LOWER_USER_NAME']) ?>">
-                                        <?= htmlspecialchars($user['LOWER_USER_NAME']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </select>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="assignee">Assignee</label>
+                                <select class="form-control" id="assignee" name="assignee">
+                                    <option value="">Unassigned</option>
+                                    <?php foreach ($users as $user): ?>
+                                        <option value="<?= htmlspecialchars($user['LOWER_USER_NAME']) ?>" 
+                                            <?= $issue['ASSIGNEE'] == $user['LOWER_USER_NAME'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($user['LOWER_USER_NAME']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="status">Status</label>
+                                <select class="form-control" id="status" name="status" required>
+                                    <?php foreach ($statuses as $status): ?>
+                                        <option value="<?= htmlspecialchars($status['ID']) ?>"
+                                            <?= $issue['ISSUESTATUS'] == $status['ID'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($status['PNAME']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
