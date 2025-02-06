@@ -63,6 +63,10 @@
                     <li class="nav-item">
                         <a class="nav-link" href="index.php?page=issues&action=search"><i class="fas fa-search"></i> Search Issues</a>
                     </li>
+                    <!-- Add Sprint navigation item -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.php?page=sprints&action=list">Sprints</a>
+                    </li>
                 </ul>
             </div>
         </div>

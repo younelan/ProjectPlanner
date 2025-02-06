@@ -38,10 +38,14 @@ include 'views/templates/header.php';
                                        class="btn btn-sm btn-primary">
                                         <i class="fas fa-tasks"></i> Issues
                                     </a>
-                                    <a href="index.php?page=projects&action=board&id=<?= $project['ID'] ?>" 
-                                       class="btn btn-sm btn-info">
-                                        <i class="fas fa-columns"></i> Board
-                                    </a>
+                                    <div class="btn-group">
+                                        <a href="index.php?page=projects&action=board&id=<?= $project['ID'] ?>" class="btn btn-outline-primary">
+                                            <i class="fas fa-columns"></i> Board
+                                        </a>
+                                        <a href="index.php?page=sprints&action=list&projectId=<?= $project['ID'] ?>" class="btn btn-outline-info">
+                                            <i class="fas fa-running"></i> Sprints
+                                        </a>
+                                    </div>
                                     <!-- New Edit button -->
                                     <a href="index.php?page=projects&action=edit&id=<?= $project['ID'] ?>" 
                                        class="btn btn-sm btn-secondary">

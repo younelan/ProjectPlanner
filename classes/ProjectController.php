@@ -77,6 +77,48 @@ class ProjectController {
         if (!$project) {
             throw new Exception("Project not found");
         }
+        // Load users for the project lead select box
+        $userModel = new User($this->db);
+        $users = $userModel->getAllUsers();
+        
+        // [To Do #1] Load workflow phases and count tasks per phase and per task type
+        $workflowModel = new Workflow($this->db);
+        $workflowPhases = $workflowModel->getWorkflowSteps($project['ID']); // use phases; PNAME is used as title in board.php
+        $issues = $this->issueModel->getIssuesForBoard($project['ID']);
+        $totalTasks = 0;
+        foreach ($workflowPhases as &$phase) {
+            $phase['taskCount'] = 0;
+            $phase['tasksByType'] = [];
+            foreach ($issues as $issue) {
+                if (isset($issue['STATUS_ID']) && $issue['STATUS_ID'] == $phase['ID']) {
+                    $phase['taskCount']++;
+                    $totalTasks++;
+                    $type = $issue['TYPE'] ?? 'Other';
+                    if (isset($phase['tasksByType'][$type])) {
+                        $phase['tasksByType'][$type]++;
+                    } else {
+                        $phase['tasksByType'][$type] = 1;
+                    }
+                }
+            }
+        }
+        // Aggregate tasks by type over all phases
+        $tasksByTypeAggregate = [];
+        foreach ($workflowPhases as $phase) {
+            foreach ($phase['tasksByType'] as $type => $count) {
+                $tasksByTypeAggregate[$type] = ($tasksByTypeAggregate[$type] ?? 0) + $count;
+            }
+        }
+        $totalPhases = count($workflowPhases);
+        $averageTasks = $totalPhases > 0 ? round($totalTasks / $totalPhases, 2) : 0;
+        $workflowStats = [
+            'totalTasks'   => $totalTasks,
+            'totalPhases'  => $totalPhases,
+            'averageTasks' => $averageTasks,
+            'tasksByTypeAggregate' => $tasksByTypeAggregate
+        ];
+        
+        // Pass $workflowPhases and $workflowStats to the view
         include __DIR__ . '/../views/projects/edit.php';
     }
     

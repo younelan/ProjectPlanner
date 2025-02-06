@@ -7,6 +7,8 @@ require_once 'classes/Issue.php';
 require_once 'classes/ProjectController.php';
 require_once 'classes/IssueController.php';
 require_once 'classes/Workflow.php';
+require_once 'models/Sprint.php';
+require_once 'classes/SprintController.php';
 
 $db = Database::getInstance($config)->getConnection();
 $page = $_GET['page'] ?? 'projects';
@@ -103,6 +105,28 @@ try {
                 break;
             default:
                 throw new Exception("Invalid action: $action");
+        }
+    } 
+    else if ($page === 'sprints') {
+        $controller = new SprintController($db);
+        switch ($action) {
+            case 'list':
+                $controller->index();
+                break;
+            case 'board':
+                if ($id === null) throw new Exception("Sprint ID required");
+                $controller->board($id);
+                break;
+            case 'create':
+                $controller->create();
+                break;
+            case 'update':
+                if ($id === null) throw new Exception("Sprint ID required");
+                $controller->update($id);
+                break;
+            default:
+                $controller->index();
+                break;
         }
     } 
     else {

@@ -1,98 +1,171 @@
 <?php 
-$pageTitle = "Board View";
+$pageTitle = "Sprint Board";
 include 'views/templates/header.php'; 
 ?>
 
-<!-- Add dependencies in the correct order -->
+<!-- Add dependencies -->
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
 
+<style>
+/* Board Layout */
+.board-container {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 1rem;
+    min-height: calc(100vh - 200px);
+}
+
+.board-column {
+    flex: 1;
+    min-width: 300px;
+    background: #f4f5f7;
+    border-radius: 4px;
+    padding: 0.5rem;
+}
+
+.board-column-header {
+    padding: 0.75rem;
+    background: #fff;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    border: 1px solid #e3e6f0;
+}
+
+.board-column-header h5 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+}
+
+.issue-list {
+    min-height: 50px;
+}
+
+.issue-card {
+    background: white;
+    border: 1px solid #e3e6f0;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+
+.issue-card:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.issue-card .card-body {
+    padding: 0.75rem;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .board-container {
+        flex-direction: column;
+        padding: 0.5rem;
+    }
+
+    .board-column {
+        min-width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .issue-card {
+        margin: 0.5rem 0;
+    }
+
+    /* Header adjustments for mobile */
+    .d-flex.justify-content-between {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .btn-group {
+        width: 100%;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+        white-space: nowrap;
+        padding: 0.5rem;
+    }
+
+    /* Make cards more touch-friendly */
+    .issue-card .card-body {
+        padding: 1rem;
+    }
+
+    /* Better status visibility */
+    .board-column-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+}
+
+/* Tabbed view styles */
+.nav-tabs {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.nav-tabs .nav-link {
+    border: 1px solid transparent;
+    border-top-left-radius: .25rem;
+    border-top-right-radius: .25rem;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: #e9ecef #e9ecef #dee2e6;
+}
+
+.nav-tabs .nav-link.active {
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+</style>
+
 <div id="boardContainer">
-    <!-- Swapped order: project name first, then view dropdown -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 id="projectName"><!-- ...existing project title... --></h2>
+        <h2 id="projectName">
+            <a href="index.php?page=projects&action=view&id=<?= $sprint['PROJECT_ID'] ?>" class="text-dark">
+                <?= htmlspecialchars($projectName) ?>
+            </a> - 
+            <?= htmlspecialchars($sprint['NAME']) ?>
+        </h2>
         <div>
-            <button type="button" class="btn btn-outline-success mr-2" data-toggle="modal" data-target="#addTaskModal">
-                <i class="fas fa-plus"></i> Add Task
-            </button>
             <div class="btn-group">
                 <button type="button" id="viewToggle" class="btn btn-outline-primary simple-dropdown-toggle" onclick="toggleSimpleDropdown(this)">
                     <i class="fas fa-eye"></i> View As
                 </button>
                 <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
-                    <a class="dropdown-item" href="#" onclick="selectView('flow'); return false;">Flow</a>
-                    <a class="dropdown-item" href="#" onclick="selectView('tabbed'); return false;">Tabbed View</a>
-                    <a class="dropdown-item" href="index.php?page=projects&action=view&id=<?= htmlspecialchars($_GET['id'] ?? '') ?>" onclick="hideDropdown(this);">List of Issues</a>
+                    <a class="dropdown-item" href="#" data-view="flow" onclick="selectView('flow'); return false;">Flow</a>
+                    <a class="dropdown-item" href="#" data-view="tabbed" onclick="selectView('tabbed'); return false;">Tabbed View</a>
                 </div>
             </div>
+            <a href="index.php?page=sprints&action=list&projectId=<?= $sprint['PROJECT_ID'] ?>" class="btn btn-outline-secondary ml-2">
+                <i class="fas fa-arrow-left"></i> Back to Sprints
+            </a>
         </div>
     </div>
 
-    <div id="board" class="board-container"></div>
-</div>
-
-<!-- New Modal: Add Task -->
-<div class="modal fade" id="addTaskModal" tabindex="-1" role="dialog" aria-labelledby="addTaskModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <form id="addTaskForm">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="hideModal()">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-            <!-- New field: Issue Title -->
-            <div class="form-group">
-                <label for="newTaskTitle">Title</label>
-                <input type="text" id="newTaskTitle" class="form-control" name="SUMMARY" required>
-            </div>
-            <!-- New field: Issue Type as dropdown -->
-            <div class="form-group">
-                <label for="newTaskType">Issue Type</label>
-                <select id="newTaskType" class="form-control" name="ISSUETYPE">
-                    <option value="Bug">Bug</option>
-                    <option value="Task" selected>Task</option>
-                    <option value="Story">Story</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-            <!-- Updated field: Description, NOT required -->
-            <div class="form-group">
-                <label for="newTaskDescription">Description (optional)</label>
-                <textarea id="newTaskDescription" class="form-control" name="DESCRIPTION"></textarea>
-            </div>
-            <!-- Existing field: Priority -->
-            <div class="form-group">
-                <label for="newTaskPriority">Priority</label>
-                <select id="newTaskPriority" class="form-control" name="PRIORITY">
-                    <option value="Low">Low</option>
-                    <option value="Medium" selected>Medium</option>
-                    <option value="High">High</option>
-                </select>
-            </div>
-            <!-- Hidden: Project Id -->
-            <input type="hidden" name="projectId" id="projectId" value="<?= $project['ID'] ?>">
-            <!-- Hidden: Status Id -->
-            <input type="hidden" name="STATUS_ID" id="defaultStatusId" value="">
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="hideModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary">Add Task</button>
-        </div>
-      </div>
-    </form>
-  </div>
+    <div id="board"></div>
 </div>
 
 <script>
 // ...existing code...
-const boardView = {
+const sprintBoard = {
     // Use saved view preference, defaulting to 'tabbed'
-    currentView: localStorage.getItem('boardView') || 'tabbed',
+    currentView: localStorage.getItem('sprintBoard') || 'tabbed',
     data: null,
     async init() {
         await this.loadData();
@@ -102,20 +175,22 @@ const boardView = {
     },
 
     async loadData() {
-        const response = await fetch('index.php?page=projects&action=board&id=<?= $_GET['id'] ?>&api=1');
+        // Fix the URL to use the sprint endpoint instead of project endpoint
+        const response = await fetch('index.php?page=sprints&action=board&id=<?= $sprint['ID'] ?>&api=1');
         this.data = await response.json();
-        document.getElementById('projectName').textContent = this.data.project.PNAME;
+        
+        console.log('Sprint Board Data:', this.data);
     },
 
     setupEventListeners() {
-        // View switcher
-        document.querySelectorAll('[data-view]').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.currentView = e.target.dataset.view;
-                this.render();
-            });
-        });
+        // Remove this since we're using onclick handlers
+        // document.querySelectorAll('[data-view]').forEach(link => {
+        //     link.addEventListener('click', (e) => {
+        //         e.preventDefault();
+        //         this.currentView = e.target.dataset.view;
+        //         this.render();
+        //     });
+        // });
     },
 
     render() {
@@ -179,7 +254,8 @@ const boardView = {
     },
 
     getIssuesForStatus(statusId) {
-        return this.data.issues.filter(i => String(i.STATUS_ID || i.ISSUESTATUS) === String(statusId));
+        // Simply match the status IDs directly from workflow
+        return this.data.issues.filter(i => String(i.ISSUESTATUS) === String(statusId));
     },
 
     setupDragAndDrop() {
@@ -194,6 +270,7 @@ const boardView = {
                     const issueId = evt.item.dataset.issueId;
                     const newStatusId = evt.to.dataset.statusId;
                     
+                    // Only update the status
                     fetch('index.php?page=issues&action=updateStatus', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -208,8 +285,7 @@ const boardView = {
                             evt.from.appendChild(evt.item);
                             alert('Error updating status: ' + data.message);
                         }
-                        // Reload board to update totals
-                        boardView.init();
+                        sprintBoard.init();
                     });
                 }
             });
@@ -237,13 +313,12 @@ const boardView = {
             <div class="card issue-card" data-issue-id="${issue.ID}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
-                        <span class="badge badge-info">${issue.TYPE}</span>
+                        <span class="badge badge-info">${issue.ISSUETYPE}</span>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-link simple-dropdown-toggle" type="button" onclick="toggleSimpleDropdown(this)">
                                 <i class="fas fa-cog"></i>
                             </button>
                             <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
-                                <!-- Added "View Issue" menu entry -->
                                 <a class="dropdown-item" href="index.php?page=issues&action=view&id=${issue.ID}">View Issue</a>
                                 <div class="dropdown-submenu">
                                     <button type="button" class="dropdown-item simple-dropdown-toggle" onclick="toggleSubMenu(this)">Set State</button>
@@ -257,7 +332,9 @@ const boardView = {
                                     <button type="button" class="dropdown-item simple-dropdown-toggle" onclick="toggleSubMenu(this)">Assign To</button>
                                     <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
                                         ${(this.data.users || []).map(user =>
-                                            `<a class="dropdown-item" href="#" onclick="assignTo(${issue.ID}, '${user.username}'); return false;">${user.name}</a>`
+                                            `<a class="dropdown-item" href="#" onclick="assignTo(${issue.ID}, '${user.USER_KEY}'); return false;">
+                                                <i class="fas fa-user"></i> ${user.USER_KEY}
+                                            </a>`
                                         ).join('')}
                                     </div>
                                 </div>
@@ -282,14 +359,14 @@ const boardView = {
         this.render();
     },
 
-    initializeDropdowns() {
+    initializeDropdowns() { 
         // No external library needed
     }
 };
 
 // Initialize everything when DOM is ready
 $(document).ready(() => {
-    boardView.init();
+    sprintBoard.init();
 });
 
 function toggleSimpleDropdown(button) {
@@ -299,9 +376,9 @@ function toggleSimpleDropdown(button) {
 
 // Update selectView so that user's choice is stored in localStorage
 function selectView(view) {
-    boardView.currentView = view;
-    localStorage.setItem('boardView', view);
-    boardView.render();
+    sprintBoard.currentView = view;
+    localStorage.setItem('sprintBoard', view);
+    sprintBoard.render();
     hideDropdown();
 }
 
@@ -326,17 +403,20 @@ function switchTab(evt, tabId) {
     document.getElementById('tab-' + tabId).classList.add('show', 'active');
 }
 
-// Replace the dummy setState function with an actual AJAX call.
-function setState(issueId, stateId) {
+// Remove hardcoded setState mapping and use workflow data directly
+function setState(issueId, workflowId) {
     fetch('index.php?page=issues&action=updateStatus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ issueId: issueId, statusId: stateId })
+        body: JSON.stringify({
+            issueId: issueId,
+            statusId: workflowId
+        })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            boardView.init(); // refresh board view silently
+            sprintBoard.init();
         } else {
             alert("Error updating state: " + data.message);
         }
@@ -385,257 +465,7 @@ document.addEventListener('click', function(event) {
 function renderStateDropdownItem(issue, state) {
     return `<a class="dropdown-item" href="#" onclick="setState(${issue.ID}, '${state.ID}'); return false;">${state.PNAME}</a>`;
 }
-
-// Attach the new add-task form submission to AJAX call
-document.getElementById('addTaskForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = {
-        projectId: document.getElementById('projectId').value,
-        SUMMARY: document.getElementById('newTaskTitle').value,
-        ISSUETYPE: document.getElementById('newTaskType').value,
-        DESCRIPTION: document.getElementById('newTaskDescription').value,  // can be empty
-        PRIORITY: document.getElementById('newTaskPriority').value,
-        // Optionally set default status using first workflow status; fallback to first tab's status ID
-        STATUS_ID: boardView.data && Object.values(boardView.data.workflow)[0] ? Object.values(boardView.data.workflow)[0].ID : ''
-    };
-    fetch('index.php?page=issues&action=create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.success) {
-            // Close modal and reload board (tasks + totals)
-            hideModal();
-            // Remove lingering backdrop
-            $('.modal-backdrop').remove();
-            boardView.init();
-        } else {
-            alert('Error adding task: ' + data.message);
-        }
-    })
-    .catch(error => {
-        alert('Error adding task: ' + error);
-    });
-});
-
-// Helper function to hide modal
-function hideModal() {
-    $('#addTaskModal').modal('hide');
-    // Remove lingering backdrop
-    $('.modal-backdrop').remove();
-}
 </script>
 
-<style>
-.overflow-auto::-webkit-scrollbar {
-    height: 8px;
-}
-.overflow-auto::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-.overflow-auto::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
-}
-.overflow-auto::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-/* Desktop Board Styling */
-.board-container {
-    display: flex;
-    gap: 1rem;
-    min-height: calc(100vh - 200px);
-}
-
-.board-column {
-    flex: 1;
-    min-width: 300px;
-    background: #f4f5f7;
-    border-radius: 4px;
-    padding: 0.5rem;
-}
-
-.board-column-header {
-    padding: 0.75rem;
-    background: #fff;
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-    border: 1px solid #e3e6f0;
-}
-
-.board-column-header h5 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 0;
-}
-
-.issue-card {
-    background: white;
-    border: 1px solid #e3e6f0;
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-    cursor: pointer;
-    transition: box-shadow 0.2s;
-}
-
-.issue-card:hover {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.issue-card .card-body {
-    padding: 0.75rem;
-}
-
-/* Mobile Responsive Styles */
-@media (max-width: 768px) {
-    .board-container {
-        /* Force block layout on mobile for both views */
-        display: block !important;
-        width: 100%;
-    }
-
-    .board-column {
-        min-width: auto;
-        margin-bottom: 1rem;
-    }
-
-    .issue-card {
-        margin: 0.5rem 0;
-    }
-
-    /* Improved header for mobile */
-    .d-flex.justify-content-between {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .d-flex.justify-content-between h2 {
-        width: 100%;
-        margin-bottom: 0.5rem;
-    }
-
-    .btn-group {
-        width: 100%;
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .btn-group .btn {
-        flex: 1;
-        white-space: nowrap;
-        padding: 0.5rem;
-    }
-
-    /* Make cards more touch-friendly */
-    .issue-card .card-body {
-        padding: 1rem;
-    }
-
-    .issue-card {
-        margin-bottom: 0.75rem;
-        border: 1px solid #e3e6f0;
-    }
-
-    /* Better status visibility */
-    .board-column-header {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    /* Add scroll indicators */
-    .overflow-auto {
-        position: relative;
-    }
-
-    .overflow-auto::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        width: 20px;
-        background: linear-gradient(to right, transparent, rgba(0,0,0,0.05));
-        pointer-events: none;
-    }
-
-    /* Optionally tighten up spacing for mobile */
-    .tab-navigation, .tab-content-container {
-        padding: 0 0.5rem;
-    }
-
-    .dropdown-menu {
-        right: 0;
-        left: auto;
-        /* Optionally add some horizontal padding */
-        margin-right: 0.5rem;
-    }
-}
-
-/* Dropdown submenu styles */
-.dropdown-submenu {
-    position: relative;
-}
-
-.dropdown-submenu .dropdown-menu {
-    top: 0;
-    left: 100%;
-    margin-top: -1px;
-}
-
-.dropdown-submenu .dropdown-toggle::after {
-    display: inline-block;
-    margin-left: .255em;
-    vertical-align: .255em;
-    content: "";
-    border-top: .3em solid transparent;
-    border-right: 0;
-    border-bottom: .3em solid transparent;
-    border-left: .3em solid;
-}
-
-/* Tab styles */
-.nav-tabs {
-    border-bottom: 1px solid #dee2e6;
-    margin-bottom: 1rem;
-}
-
-.nav-tabs .nav-link {
-    border: 1px solid transparent;
-    border-top-left-radius: .25rem;
-    border-top-right-radius: .25rem;
-}
-
-.nav-tabs .nav-link:hover {
-    border-color: #e9ecef #e9ecef #dee2e6;
-}
-
-.nav-tabs .nav-link.active {
-    color: #495057;
-    background-color: #fff;
-    border-color: #dee2e6 #dee2e6 #fff;
-}
-
-.issue-list {
-    min-height: 50px; // added min-height so empty columns are droppable
-}
-</style>
-
-<div class="workflow-details mt-4">
-    <h3>Workflow Details</h3>
-    <ul>
-        <?php foreach ($workflowSteps as $step): ?>
-            <li>
-                <strong><?= htmlspecialchars($step['step_name'] ?? 'Step') ?></strong>:
-                <?= htmlspecialchars($step['description'] ?? 'No description available') ?>
-            </li>
-        <?php endforeach; ?>
-    </ul>
-</div>
 
 <?php include 'views/templates/footer.php'; ?>

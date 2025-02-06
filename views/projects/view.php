@@ -55,6 +55,30 @@ include 'views/templates/header.php';
     </div>
 </div>
 
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header">
+                Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="btn-group">
+                    <a href="index.php?page=projects&action=board&id=<?= $project['ID'] ?>" class="btn btn-outline-primary">
+                        <i class="fas fa-columns"></i> Board View
+                    </a>
+                    <a href="index.php?page=issues&action=list&id=<?= $project['ID'] ?>" class="btn btn-outline-secondary">
+                        <i class="fas fa-list"></i> List View
+                    </a>
+                    <!-- Add Sprint Board link -->
+                    <a href="index.php?page=sprints&action=list&projectId=<?= $project['ID'] ?>" class="btn btn-outline-info">
+                        <i class="fas fa-running"></i> Sprints
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php 
 // Helper functions
 function getStatusBadgeClass($status) {

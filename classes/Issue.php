@@ -534,7 +534,15 @@ public function getProjectIssuesWithSubcomponents($projectId) {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function createIssue($data) {
+    public function createIssue(array $data) {
+        // Ensure default values to avoid undefined array key warnings
+        $data['projectId']   = $data['projectId']   ?? null;
+        $data['summary']     = $data['summary']     ?? '';
+        $data['description'] = $data['description'] ?? '';
+        $data['issuetype']   = $data['issuetype']   ?? 'Task';
+        $data['priority']    = $data['priority']    ?? 'Medium';
+        $data['reporter']    = $data['reporter']    ?? '';
+        
         try {
             // Get next ID
             $stmt = $this->db->query("SELECT MAX(ID) FROM JIRAISSUE");

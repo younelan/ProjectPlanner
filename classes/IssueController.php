@@ -147,25 +147,37 @@ class IssueController {
     }
 
     public function create() {
-        $projectId = isset($_GET['projectId']) ? (int)$_GET['projectId'] : null;
-        if (!$projectId) {
-            throw new Exception("Project ID is required");
+        header('Content-Type: application/json');
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            echo json_encode(['success' => false, 'message' => 'Invalid JSON input']);
+            exit;
         }
-
-        $project = $this->projectModel->getProjectById($projectId);
-        if (!$project) {
-            throw new Exception("Project not found");
+        // Validate required field: TITLE (SUMMARY)
+        if (empty($data['SUMMARY'])) {
+            echo json_encode(['success' => false, 'message' => 'Title (SUMMARY) is required']);
+            exit;
         }
-
-        // Use the same method as edit to get data
-        $userModel = new User($this->db);
-        $users = $userModel->getAllUsers();
-
+        // Map uppercase keys from AJAX into lower-case keys expected by createIssue
+        $mappedData = [
+            'projectId'   => $data['projectId'] ?? null,
+            'summary'     => $data['SUMMARY'],
+            'description' => $data['DESCRIPTION'] ?? '',  // allow empty description
+            'issuetype'   => $data['ISSUETYPE'] ?? 'Task',
+            'priority'    => $data['PRIORITY'] ?? 'Medium',
+            'reporter'    => $data['REPORTER'] ?? '',
+            'assignee'    => $data['ASSIGNEE'] ?? null,
+            'STATUS_ID'   => $data['STATUS_ID'] ?? null
+        ];
         
-        $priorities = $this->issueModel->getAllPriorities();
-        $issueTypes = $this->issueModel->getAllIssueTypes();
-        
-        include 'views/issues/create.php';
+        $issueId = $this->issueModel->createIssue($mappedData);
+        if ($issueId) {
+            echo json_encode(['success' => true, 'issueId' => $issueId]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error creating task']);
+        }
+        exit;
     }
 
     public function store() {
@@ -223,27 +235,22 @@ class IssueController {
     }
 
     public function updateStatus() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('HTTP/1.1 405 Method Not Allowed');
-            exit;
-        }
-
         $data = json_decode(file_get_contents('php://input'), true);
-        $issueId = $data['issueId'] ?? null;
-        $statusId = $data['statusId'] ?? null;  // Changed from status to statusId
-
-        if (!$issueId || !$statusId) {  // Check for statusId instead of status
+        
+        if (!isset($data['issueId']) || !isset($data['statusId'])) {
             echo json_encode(['success' => false, 'message' => 'Missing required fields']);
-            exit;
+            return;
         }
 
         try {
-            $this->issueModel->updateIssueStatus($issueId, $statusId);
+            $stmt = $this->db->prepare("UPDATE JIRAISSUE SET ISSUESTATUS = ? WHERE ID = ?");
+            $stmt->execute([$data['statusId'], $data['issueId']]);
+            
+            // The issue stays in the sprint - we're just updating its status
             echo json_encode(['success' => true]);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
-        exit;
     }
 }
 ?>
