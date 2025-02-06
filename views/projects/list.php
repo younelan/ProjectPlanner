@@ -3,64 +3,309 @@ $pageTitle = 'Projects | Scrum Viewer';
 include 'views/templates/header.php'; 
 ?>
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h2 class="mb-0"><i class="fas fa-project-diagram"></i> Projects</h2>
-                <a href="index.php?page=projects&action=create" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Create Project
-                </a>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th width="10%"><i class="fas fa-key"></i> Key</th>
-                                <th width="40%">Name</th>
-                                <!--<th width="20%"><i class="fas fa-user"></i> Lead</th>-->
-                                <th width="30%">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($projects as $project): ?>
-                            <tr>
-                                <td><span class="badge badge-info"><?= htmlspecialchars($project['PKEY']) ?></span></td>
-                                <td>
-                                    <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>" class="text-dark">
-                                        <?= htmlspecialchars($project['PNAME']) ?>
-                                        <?php if ($project['DESCRIPTION']): ?>
-                                            <br><small class="text-muted"><?= htmlspecialchars($project['DESCRIPTION']) ?></small>
-                                        <?php endif; ?>
-                                    </a>
-                                </td>
-                                <!--<td><?= htmlspecialchars($project['LEAD']) ?></td>-->
-                                <td>
-                                    <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>" 
-                                       class="btn btn-sm btn-primary">
-                                        <i class="fas fa-tasks"></i> Issues
-                                    </a>
-                                    <div class="btn-group">
-                                        <a href="index.php?page=projects&action=board&id=<?= $project['ID'] ?>" class="btn btn-outline-primary">
-                                            <i class="fas fa-columns"></i> Board
-                                        </a>
-                                        <a href="index.php?page=sprints&action=list&projectId=<?= $project['ID'] ?>" class="btn btn-outline-info">
-                                            <i class="fas fa-running"></i> Sprints
-                                        </a>
-                                    </div>
-                                    <!-- New Edit button -->
-                                    <a href="index.php?page=projects&action=edit&id=<?= $project['ID'] ?>" 
-                                       class="btn btn-sm btn-secondary">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+<style>
+    :root {
+        /* Professional color palette */
+        --color-primary: #2684FF;
+        --color-success: #36B37E;
+        --color-warning: #FFAB00;
+        --color-danger: #FF5630;
+        --color-info: #6554C0;
+        --color-bg: #F4F5F7;
+        --color-text: #172B4D;
+        
+        /* Project card accent colors */
+        --accent-1: var(--color-success);
+        --accent-2: var(--color-primary);
+        --accent-3: var(--color-info);
+        --accent-4: var(--color-warning);
+    }
+
+    .app-container {
+        margin: 0;
+        min-height: calc(100vh - var(--nav-height));
+        background: #f2f2f2; /* Softer global background */
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, rgb(224 228 202) 0%, rgb(236, 215, 190) 100%);
+        padding: 1rem;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .page-header h1 {
+        color: darkred;
+    }
+
+    .projects-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-title {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .project-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .project-card {
+        position: relative;
+        background: #ffffff;
+        color: #343a40;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #e3e3e3;
+    }
+
+    .project-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    .project-header {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        position: relative;
+        background: #fafafa !important;
+        color: #212529 !important;
+    }
+
+    .project-header::before {
+        content: none; /* Remove loud stripes */
+    }
+
+    .project-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .project-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--color-text);
+        text-decoration: none;
+        flex: 1;
+    }
+
+    .project-key {
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 0.25rem 0.75rem;
+        border-radius: 3px;
+        white-space: nowrap;
+    }
+
+    .project-card:nth-child(4n+1) .project-key { background: rgba(54, 179, 126, 0.1); color: var(--accent-1); }
+    .project-card:nth-child(4n+2) .project-key { background: rgba(38, 132, 255, 0.1); color: var(--accent-2); }
+    .project-card:nth-child(4n+3) .project-key { background: rgba(101, 84, 192, 0.1); color: var(--accent-3); }
+    .project-card:nth-child(4n+4) .project-key { background: rgba(255, 171, 0, 0.1); color: var(--accent-4); }
+
+    .project-card:nth-child(4n+1) .project-header {
+        background: linear-gradient(135deg, #edf7fa 0%, #dceef7 100%) !important;
+        color: #172B4D !important;
+    }
+    .project-card:nth-child(4n+1) .project-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #aed4e4; /* subtle stripe */
+    }
+
+    .project-card:nth-child(4n+2) .project-header {
+        background: linear-gradient(135deg, #f9f1e8 0%, #f6eadf 100%) !important;
+        color: #172B4D !important;
+    }
+    .project-card:nth-child(4n+2) .project-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #e8dacb;
+    }
+
+    .project-card:nth-child(4n+3) .project-header {
+        background: linear-gradient(135deg, #f3e9f6 0%, #ede2f1 100%) !important;
+        color: #172B4D !important;
+    }
+    .project-card:nth-child(4n+3) .project-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #d5c4df;
+    }
+
+    .project-card:nth-child(4n+4) .project-header {
+        background: linear-gradient(135deg, #e9fbf1 0%, #e2f7ec 100%) !important;
+        color: #172B4D !important;
+    }
+    .project-card:nth-child(4n+4) .project-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #c0e2cf;
+    }
+
+    .project-lead {
+        color: #5e6c84;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .project-content {
+        padding: 1.5rem;
+    }
+    .project-description {
+        color: #42526e;
+        font-size: 0.95rem;
+        margin-bottom: 1.25rem;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .project-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
+    }
+    .action-group {
+        display: flex;
+        gap: 0.5rem;
+        flex: 1;
+    }
+    .btn {
+        padding: 0.6rem 1rem;
+        font-weight: 500;
+        border-radius: 6px;
+    }
+    .create-btn {
+        background: var(--color-primary);
+        color: #fff;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .create-btn:hover {
+        background: #1c6fe4;
+        color: #fff;
+    }
+    
+    @media (max-width: 768px) {
+        .page-header {
+            position: sticky;
+            top: var(--nav-height);
+            z-index: 10;
+        }
+
+        .projects-grid {
+            padding: 0.5rem;
+        }
+
+        .project-card {
+            margin: 0;
+            border-radius: 0;
+        }
+    }
+</style>
+
+<div class="app-container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-project-diagram"></i>
+            Projects
+        </h1>
+        <a href="index.php?page=projects&action=create" class="create-btn">
+            <i class="fas fa-plus"></i> Create Project
+        </a>
+    </div>
+
+    <div class="projects-container">
+        <div class="project-grid">
+            <?php foreach ($projects as $project): ?>
+                <div class="project-card">
+                    <div class="project-header">
+                        <div class="project-title">
+                            <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>" class="project-name">
+                                <?= htmlspecialchars($project['PNAME']) ?>
+                            </a>
+                            <span class="project-key"><?= htmlspecialchars($project['PKEY']) ?></span>
+                        </div>
+                        <div class="project-lead">
+                            <i class="fas fa-user-circle"></i>
+                            <?= htmlspecialchars($project['LEAD']) ?>
+                        </div>
+                    </div>
+                    
+                    <div class="project-content">
+                        <?php if ($project['DESCRIPTION']): ?>
+                            <div class="project-description">
+                                <?= htmlspecialchars($project['DESCRIPTION']) ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="project-actions">
+                            <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>" 
+                               class="btn btn-primary">
+                                <i class="fas fa-tasks"></i> Issues
+                            </a>
+                            <div class="action-group">
+                                <a href="index.php?page=projects&action=board&id=<?= $project['ID'] ?>" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-columns"></i> Board
+                                </a>
+                                <a href="index.php?page=sprints&action=list&projectId=<?= $project['ID'] ?>" 
+                                   class="btn btn-outline-info">
+                                    <i class="fas fa-running"></i> Sprints
+                                </a>
+                            </div>
+                            <a href="index.php?page=projects&action=edit&id=<?= $project['ID'] ?>" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 </div>

@@ -8,20 +8,22 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #0052cc;
-            --secondary-color: #172b4d;
+            --primary-color: #2684FF;
+            --nav-height: 56px;
         }
         .navbar {
-            background-color: var(--primary-color) !important;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            height: var(--nav-height);
+            background: linear-gradient(135deg, #96866a 0%, #b4ab97 100%) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1px;
         }
         .navbar-brand img {
             height: 30px;
             margin-right: 10px;
         }
         .main-content {
-            margin-top: 30px;
-            padding: 20px;
+            padding: 0;
+            margin: 0;
         }
         .card {
             box-shadow: 0 1px 3px rgba(0,0,0,0.12);
@@ -82,7 +84,7 @@
             <?php unset($_SESSION['success']); ?>
         <?php endif; ?>
 
-        <div class="container-fluid mt-4">
+        <div class="container-fluid">
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <?= nl2br(htmlspecialchars($_SESSION['error'])) ?>
