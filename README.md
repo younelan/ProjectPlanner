@@ -65,8 +65,8 @@ Here are some screenshots related to the project:
 
 ### Project Sprints
 
-![Project Sprints](project_sprints.jpg)
+![Project Sprints](screenshots/project_sprints.jpg)
 
 ### Sprint Details
 
-![Sprint Details](sprint.jpg)
+![Sprint Details](screenshots/sprint.jpg)
