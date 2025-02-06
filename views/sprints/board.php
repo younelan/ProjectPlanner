@@ -10,127 +10,197 @@ include 'views/templates/header.php';
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
 
 <style>
+/* Board Container */
+#boardContainer {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0 1rem;
+}
+
 /* Board Layout */
 .board-container {
     display: flex;
     gap: 1rem;
-    overflow-x: auto;
-    padding: 1rem;
+    padding-bottom: 1rem;
     min-height: calc(100vh - 200px);
 }
 
+/* Column Styling */
 .board-column {
-    flex: 1;
-    min-width: 300px;
-    background: #f4f5f7;
-    border-radius: 4px;
-    padding: 0.5rem;
+    flex: 0 0 300px;
+    background: var(--light);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 180px);
 }
 
 .board-column-header {
-    padding: 0.75rem;
-    background: #fff;
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-    border: 1px solid #e3e6f0;
+    background: white;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(0,0,0,.125);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 .board-column-header h5 {
+    margin: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
 }
 
+/* Issue List */
 .issue-list {
-    min-height: 50px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 100px;
+    padding: 0.5rem;
 }
 
+/* Card Styling */
 .issue-card {
     background: white;
-    border: 1px solid #e3e6f0;
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-    cursor: pointer;
-    transition: box-shadow 0.2s;
+    border: 1px solid rgba(0,0,0,.125);
+    border-radius: 0.25rem;
+    margin-bottom: 0.75rem;
+    cursor: grab;
 }
 
-.issue-card:hover {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.issue-card:active {
+    cursor: grabbing;
 }
 
 .issue-card .card-body {
-    padding: 0.75rem;
+    padding: 1rem;
 }
 
-/* Mobile Responsive Styles */
+/* Dropdown Styling */
+.dropdown-menu {
+    min-width: 200px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    border: 1px solid rgba(0,0,0,.125);
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.dropdown-submenu {
+    position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: -1px;
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
     .board-container {
-        flex-direction: column;
-        padding: 0.5rem;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding: 1rem 0;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
     }
 
     .board-column {
-        min-width: 100%;
-        margin-bottom: 1rem;
+        flex: 0 0 85vw;
+        margin-right: 1rem;
+        scroll-snap-align: start;
+        height: calc(100vh - 180px);
+    }
+
+    .board-column:last-child {
+        margin-right: 1rem; /* Ensure last column has right margin on mobile */
     }
 
     .issue-card {
-        margin: 0.5rem 0;
+        margin-bottom: 1rem;
     }
 
-    /* Header adjustments for mobile */
-    .d-flex.justify-content-between {
+    /* Ensure dropdowns stay on screen */
+    .dropdown-menu {
+        position: fixed !important;
+        top: auto !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100%;
+        max-height: 50vh;
+        overflow-y: auto;
+        margin: 0;
+        border-radius: 1rem 1rem 0 0;
+        transform: none !important;
+    }
+
+    .dropdown-submenu .dropdown-menu {
+        position: static !important;
+        margin-left: 1rem;
+        box-shadow: none;
+        border-left: 2px solid var(--primary);
+    }
+
+    /* Larger touch targets */
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 0.75rem;
+    }
+
+    /* Header adjustments */
+    #boardContainer > .d-flex {
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 1rem;
+    }
+
+    #boardContainer h2 {
+        width: 100%;
+        font-size: 1.5rem;
     }
 
     .btn-group {
         width: 100%;
         display: flex;
-        gap: 0.5rem;
     }
 
     .btn-group .btn {
         flex: 1;
-        white-space: nowrap;
-        padding: 0.5rem;
-    }
-
-    /* Make cards more touch-friendly */
-    .issue-card .card-body {
-        padding: 1rem;
-    }
-
-    /* Better status visibility */
-    .board-column-header {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 }
 
-/* Tabbed view styles */
+/* Tabbed View Styles */
+.tab-navigation {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 .nav-tabs {
-    border-bottom: 1px solid #dee2e6;
-    margin-bottom: 1rem;
+    white-space: nowrap;
+    flex-wrap: nowrap;
 }
 
 .nav-tabs .nav-link {
-    border: 1px solid transparent;
-    border-top-left-radius: .25rem;
-    border-top-right-radius: .25rem;
+    padding: 0.75rem 1rem;
 }
 
-.nav-tabs .nav-link:hover {
-    border-color: #e9ecef #e9ecef #dee2e6;
-}
-
-.nav-tabs .nav-link.active {
-    color: #495057;
-    background-color: #fff;
-    border-color: #dee2e6 #dee2e6 #fff;
+.tab-content {
+    padding: 1rem;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 0.25rem 0.25rem;
 }
 </style>
 

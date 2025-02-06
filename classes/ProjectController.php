@@ -144,6 +144,42 @@ class ProjectController {
         }
     }
 
+    public function create() {
+        $projects = $this->projectModel->getAllProjects();
+        include 'views/projects/create.php';
+    }
+
+    public function store() {
+        try {
+            $this->validateProjectData($_POST);
+            
+            // Create the project
+            $newProjectId = $this->projectModel->createProject($_POST);
+            
+            $_SESSION['message'] = 'Project created successfully';
+            header('Location: index.php?page=projects');
+            exit;
+        } catch (Exception $e) {
+            $_SESSION['error'] = $e->getMessage();
+            header('Location: index.php?page=projects&action=create');
+            exit;
+        }
+    }
+
+    private function validateProjectData($data) {
+        if (empty($data['PNAME']) || empty($data['PKEY']) || empty($data['LEAD'])) {
+            throw new Exception('Required fields are missing');
+        }
+
+        if (!preg_match('/^[A-Z0-9]+$/', $data['PKEY'])) {
+            throw new Exception('Project key must contain only uppercase letters and numbers');
+        }
+
+        if (!$this->projectModel->validateProjectKey($data['PKEY'])) {
+            throw new Exception('Project key already exists');
+        }
+    }
+
     private function getProjectDetails($projectId) {
         // Example SQL to fetch project details
         $query = "SELECT * FROM PROJECT WHERE ID = :projectId";

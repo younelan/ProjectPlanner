@@ -8,6 +8,9 @@ include 'views/templates/header.php';
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h2 class="mb-0"><i class="fas fa-project-diagram"></i> Projects</h2>
+                <a href="index.php?page=projects&action=create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Project
+                </a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">

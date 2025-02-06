@@ -67,5 +67,81 @@ class Project {
             ':id'          => $id
         ]);
     }
+
+    public function createProject($data) {
+        try {
+            $this->db->beginTransaction();
+
+            // Insert into PROJECT table
+            $stmt = $this->db->prepare("
+                INSERT INTO PROJECT (
+                    PNAME, PKEY, LEAD, DESCRIPTION, URL, 
+                    PCOUNTER, ASSIGNEETYPE, PROJECTTYPE
+                ) VALUES (
+                    :PNAME, :PKEY, :LEAD, :DESCRIPTION, :URL,
+                    0, 1, 'software'
+                )
+            ");
+
+            $stmt->execute([
+                ':PNAME' => $data['PNAME'],
+                ':PKEY' => $data['PKEY'],
+                ':LEAD' => $data['LEAD'],
+                ':DESCRIPTION' => $data['DESCRIPTION'],
+                ':URL' => $data['URL']
+            ]);
+
+            $newProjectId = $this->db->lastInsertId();
+
+            // Clone workflow from existing project
+            if (!empty($data['clone_project_id'])) {
+                $this->cloneWorkflow($data['clone_project_id'], $newProjectId);
+            }
+
+            $this->db->commit();
+            return $newProjectId;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    private function cloneWorkflow($sourceProjectId, $newProjectId) {
+        // Clone JIRAWORKFLOWS entries
+        $stmt = $this->db->prepare("
+            INSERT INTO JIRAWORKFLOWS (
+                WORKFLOWNAME, CREATORNAME, DESCRIPTOR, ISLOCKED
+            )
+            SELECT 
+                CONCAT(:newKey, '_workflow'),
+                CREATORNAME,
+                DESCRIPTOR,
+                ISLOCKED
+            FROM JIRAWORKFLOWS
+            WHERE ID IN (
+                SELECT WORKFLOW_ID 
+                FROM JIRAISSUE 
+                WHERE PROJECT = :sourceProjectId
+                LIMIT 1
+            )
+        ");
+
+        $stmt->execute([
+            ':sourceProjectId' => $sourceProjectId,
+            ':newKey' => $newProjectId
+        ]);
+
+        // You might want to clone other related workflow data here
+        // Such as:
+        // - WORKFLOWSCHEME
+        // - NODEASSOCIATION (for workflow associations)
+        // - Any other workflow-related tables
+    }
+
+    public function validateProjectKey($key) {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM PROJECT WHERE PKEY = :key");
+        $stmt->execute([':key' => $key]);
+        return $stmt->fetchColumn() == 0;
+    }
 }
 ?>

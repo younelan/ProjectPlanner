@@ -17,11 +17,22 @@ As Is, No Warranties
 - View Issue Details with link to associated Issues
 - Basic Edit Issue
 - Create/Delete Issue
-- Simple Board by State
-- Show Comment and task history
+- Simple Project Board/Backlog
+  - show issues
+  - Drag swim lane
+  - tabbed view
+- Sprints
+  - create sprint
+  - view sprint
+  - swim lane for sprint 
+- Issue Details
+  - Show Comment
+  - Task history
+- Project
+  - edit/view statistics
+
 
 ## Plans
-- Add Limited edit of projects
 - Add Auth
 - Add template engine like simplicity
 - Templates/ Themes

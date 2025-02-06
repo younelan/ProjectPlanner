@@ -26,15 +26,12 @@ try {
                 if ($id === null) throw new Exception("Project ID required");
                 $controller->view($id);
                 break;
-            case 'board':
-                if ($id === null) throw new Exception("Project ID required");
-                // Handle both API and view requests in board method
-                if (isset($_GET['api'])) {
-                    header('Content-Type: application/json');
-                }
-                $controller->board($id);
+            case 'create':
+                $controller->create();
                 break;
-            // New edit and update actions
+            case 'store':
+                $controller->store();
+                break;
             case 'edit':
                 if ($id === null) throw new Exception("Project ID required");
                 $controller->edit($id);
@@ -42,6 +39,10 @@ try {
             case 'update':
                 if ($id === null) throw new Exception("Project ID required");
                 $controller->update($id);
+                break;
+            case 'board':
+                if ($id === null) throw new Exception("Project ID required");
+                $controller->board($id);
                 break;
             default:
                 throw new Exception("Invalid action: $action");
