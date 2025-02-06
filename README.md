@@ -44,4 +44,29 @@ At this point, it relies on a Jira Database in MySQL (maybe postgres, untested)
 - Add template engine like simplicity
 - Templates/ Themes
  
+## Screenshots
+Here are some screenshots related to the project:
 
+### Issue Details History
+
+![Issue Details History](issue_details_history.jpg)
+
+### Project List
+
+![Project List](project_list.jpg)
+
+### Project Statistics
+
+![Project Statistics](project_stats.jpg)
+
+### Project Backlog Board
+
+![Project Backlog Board](project_backlog_board.jpg)
+
+### Project Sprints
+
+![Project Sprints](project_sprints.jpg)
+
+### Sprint Details
+
+![Sprint Details](sprint.jpg)
