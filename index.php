@@ -88,6 +88,9 @@ try {
                 if ($id === null) throw new Exception("Issue ID required");
                 $controller->addComment($id);
                 break;
+            case 'new':
+                $controller->new();
+                break;
             case 'create':
                 $controller->create();
                 break;

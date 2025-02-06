@@ -146,6 +146,7 @@ class IssueController {
         exit;
     }
 
+    // Keep existing create() method untouched for API usage
     public function create() {
         header('Content-Type: application/json');
         $input = file_get_contents('php://input');
@@ -178,6 +179,26 @@ class IssueController {
             echo json_encode(['success' => false, 'message' => 'Error creating task']);
         }
         exit;
+    }
+
+    // Add new method for form-based creation
+    public function new() {
+        if (!isset($_GET['projectId'])) {
+            throw new Exception("Project ID is required");
+        }
+        
+        $projectId = $_GET['projectId'];
+        $project = $this->projectModel->getProjectById($projectId);
+        if (!$project) {
+            throw new Exception("Project not found");
+        }
+
+        $userModel = new User($this->db);
+        $users = $userModel->getAllUsers();
+        $priorities = $this->issueModel->getAllPriorities();
+        $issueTypes = $this->issueModel->getAllIssueTypes();
+
+        include 'views/issues/create.php';
     }
 
     public function store() {

@@ -23,7 +23,7 @@ include 'views/templates/header.php';
                     <a href="index.php?page=projects&action=board&id=<?= $project['ID'] ?>" class="btn btn-outline-primary">
                         <i class="fas fa-columns"></i> Board View
                     </a>
-                    <a href="index.php?page=issues&action=create&projectId=<?= $project['ID'] ?>" class="btn btn-primary">
+                    <a href="index.php?page=issues&action=new&projectId=<?= $project['ID'] ?>" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Create Issue
                     </a>
                 </div>

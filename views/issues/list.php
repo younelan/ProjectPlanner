@@ -3,57 +3,57 @@ $pageTitle = $project['PNAME'] . ' Issues | Scrum Viewer';
 include 'views/templates/header.php'; 
 ?>
 
-<div class="row">
-    <div class="col-md-12">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="index.php">Projects</a></li>
-                <li class="breadcrumb-item active"><?= htmlspecialchars($project['PNAME']) ?> Issues</li>
-            </ol>
-        </nav>
+<style>
+    .app-container {
+        background: #f2f2f2;
+        min-height: calc(100vh - var(--nav-height));
+    }
 
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h2 class="mb-0">
-                    <i class="fas fa-tasks"></i> 
-                    <?= htmlspecialchars($project['PNAME']) ?> Issues
-                </h2>
-                <div>
-                    <a href="index.php?page=projects&action=board&id=<?= $project['ID'] ?>" class="btn btn-outline-primary">
-                        <i class="fas fa-columns"></i> Switch to Board
-                    </a>
-                    <a href="index.php?page=issues&action=create&projectId=<?= htmlspecialchars($project['ID']) ?>" 
-                       class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Create New Issue
-                    </a>
-                </div>
-            </div>
-            <div class="card-body">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th width="10%">ID</th>
-                            <th width="30%">Summary</th>
-                            <th width="10%">Type</th>
-                            <th width="10%">Status</th>
-                            <th width="15%">Assignee</th>
-                            <th width="10%">Priority</th>
-                            <th width="15%">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($issues as $issue): ?>
-                        <tr>
-                            <td>
-                                <span class="badge badge-secondary">
-                                    <?= htmlspecialchars($project['PKEY']) ?>-<?= htmlspecialchars($issue['ID']) ?>
-                                </span>
-                            </td>
-                            <td>
-                                <strong><?= htmlspecialchars($issue['SUMMARY']) ?></strong>
-                            </td>
-                            <td>
-                                <span class="badge badge-info"><?= htmlspecialchars($issue['TYPE']) ?></span>
+    .page-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        color: white;
+    }
+
+    .page-title {
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .issues-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    .card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: none;
+    }
+
+    .badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+
+    .badge-secondary { background: #f1f5f9; color: #475569; }
+    .badge-primary { background: #dbeafe; color: #1e40af; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-info { background: #e0f2fe; color: #075985; }
+
+    .btn-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .issues-container {
                             </td>
                             <td>
                                 <span class="badge badge-<?= getStatusBadgeClass($issue['STATUS']) ?>">
