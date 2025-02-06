@@ -72,34 +72,72 @@ class Project {
         try {
             $this->db->beginTransaction();
 
-            // Insert into PROJECT table
+            // Get next ID for project (MAX + 100)
+            $stmt = $this->db->prepare("SELECT COALESCE(MAX(ID), 0) + 100 FROM PROJECT");
+            $stmt->execute();
+            $newId = $stmt->fetchColumn();
+
+            // Insert project
             $stmt = $this->db->prepare("
                 INSERT INTO PROJECT (
-                    PNAME, PKEY, LEAD, DESCRIPTION, URL, 
+                    ID, PNAME, PKEY, `LEAD`, DESCRIPTION, URL, 
                     PCOUNTER, ASSIGNEETYPE, PROJECTTYPE
                 ) VALUES (
-                    :PNAME, :PKEY, :LEAD, :DESCRIPTION, :URL,
+                    :id, :PNAME, :PKEY, :LEAD, :DESCRIPTION, :URL,
                     0, 1, 'software'
                 )
             ");
 
-            $stmt->execute([
+            $result = $stmt->execute([
+                ':id' => $newId,
                 ':PNAME' => $data['PNAME'],
                 ':PKEY' => $data['PKEY'],
                 ':LEAD' => $data['LEAD'],
-                ':DESCRIPTION' => $data['DESCRIPTION'],
-                ':URL' => $data['URL']
+                ':DESCRIPTION' => $data['DESCRIPTION'] ?? '',
+                ':URL' => $data['URL'] ?? ''
             ]);
 
-            $newProjectId = $this->db->lastInsertId();
+            if (!$result) {
+                throw new Exception("Failed to create project");
+            }
 
-            // Clone workflow from existing project
+            // Clone workflow in same transaction
             if (!empty($data['clone_project_id'])) {
-                $this->cloneWorkflow($data['clone_project_id'], $newProjectId);
+                $newWorkflowId = $this->cloneWorkflow($data['clone_project_id'], $newId);
+                
+                // Associate workflow with project
+                $stmt = $this->db->prepare("
+                    INSERT INTO WORKFLOWSCHEME (ID, NAME, DESCRIPTION)
+                    VALUES (:id, :name, :description)
+                ");
+                
+                $stmt->execute([
+                    ':id' => $newId,
+                    ':name' => $data['PKEY'] . ' Workflow Scheme',
+                    ':description' => 'Workflow scheme for ' . $data['PNAME']
+                ]);
+                
+                // Add workflow associations
+                $stmt = $this->db->prepare("
+                    INSERT INTO NODEASSOCIATION (
+                        SOURCE_NODE_ID, SOURCE_NODE_ENTITY, 
+                        SINK_NODE_ID, SINK_NODE_ENTITY, 
+                        ASSOCIATION_TYPE, SEQUENCE
+                    ) VALUES (
+                        :projectId, 'Project',
+                        :workflowId, 'Workflow',
+                        'ProjectWorkflow', 1
+                    )
+                ");
+                
+                $stmt->execute([
+                    ':projectId' => $newId,
+                    ':workflowId' => $newWorkflowId
+                ]);
             }
 
             $this->db->commit();
-            return $newProjectId;
+            return $newId;
         } catch (Exception $e) {
             $this->db->rollBack();
             throw $e;
@@ -107,35 +145,57 @@ class Project {
     }
 
     private function cloneWorkflow($sourceProjectId, $newProjectId) {
-        // Clone JIRAWORKFLOWS entries
-        $stmt = $this->db->prepare("
-            INSERT INTO JIRAWORKFLOWS (
-                WORKFLOWNAME, CREATORNAME, DESCRIPTOR, ISLOCKED
-            )
-            SELECT 
-                CONCAT(:newKey, '_workflow'),
-                CREATORNAME,
-                DESCRIPTOR,
-                ISLOCKED
-            FROM JIRAWORKFLOWS
-            WHERE ID IN (
-                SELECT WORKFLOW_ID 
-                FROM JIRAISSUE 
-                WHERE PROJECT = :sourceProjectId
+        try {
+            // First, get the workflow from source project
+            $stmt = $this->db->prepare("
+                SELECT DISTINCT w.ID, w.WORKFLOWNAME, w.CREATORNAME, w.DESCRIPTOR, w.ISLOCKED
+                FROM JIRAWORKFLOWS w
+                JOIN JIRAISSUE i ON i.WORKFLOW_ID = w.ID
+                WHERE i.PROJECT = :sourceProjectId
+                ORDER BY w.ID
                 LIMIT 1
-            )
-        ");
+            ");
+            
+            $stmt->execute([':sourceProjectId' => $sourceProjectId]);
+            $sourceWorkflow = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$sourceWorkflow) {
+                throw new Exception("No workflow found in source project");
+            }
 
-        $stmt->execute([
-            ':sourceProjectId' => $sourceProjectId,
-            ':newKey' => $newProjectId
-        ]);
+            // Check if workflow ID already exists
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM JIRAWORKFLOWS WHERE ID = :id");
+            $stmt->execute([':id' => $newProjectId]);
+            if ($stmt->fetchColumn() > 0) {
+                throw new Exception("Workflow ID {$newProjectId} already exists. Cannot create duplicate workflow.");
+            }
 
-        // You might want to clone other related workflow data here
-        // Such as:
-        // - WORKFLOWSCHEME
-        // - NODEASSOCIATION (for workflow associations)
-        // - Any other workflow-related tables
+            // Insert new workflow using project ID
+            $stmt = $this->db->prepare("
+                INSERT INTO JIRAWORKFLOWS (
+                    ID, WORKFLOWNAME, CREATORNAME, DESCRIPTOR, ISLOCKED
+                ) VALUES (
+                    :id, :workflowName, :creatorName, :descriptor, :isLocked
+                )
+            ");
+
+            $result = $stmt->execute([
+                ':id' => $newProjectId,
+                ':workflowName' => $newProjectId . '_workflow',
+                ':creatorName' => $sourceWorkflow['CREATORNAME'],
+                ':descriptor' => $sourceWorkflow['DESCRIPTOR'],
+                ':isLocked' => $sourceWorkflow['ISLOCKED']
+            ]);
+
+            if (!$result) {
+                throw new Exception("Failed to create workflow for project ID {$newProjectId}");
+            }
+
+            return $newProjectId;
+        } catch (Exception $e) {
+            // Re-throw with more context
+            throw new Exception("Workflow creation failed: " . $e->getMessage());
+        }
     }
 
     public function validateProjectKey($key) {

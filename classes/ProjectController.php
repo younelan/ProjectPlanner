@@ -145,38 +145,85 @@ class ProjectController {
     }
 
     public function create() {
+        // Get all projects for workflow cloning dropdown
         $projects = $this->projectModel->getAllProjects();
+        // Get all users for project lead dropdown
+        $userModel = new User($this->db);
+        $users = $userModel->getAllUsers();
+        
+        // Include any error messages from session
+        $error = $_SESSION['error'] ?? null;
+        unset($_SESSION['error']);
+        
         include 'views/projects/create.php';
     }
 
     public function store() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->create();
+            return;
+        }
+
         try {
             $this->validateProjectData($_POST);
-            
-            // Create the project
             $newProjectId = $this->projectModel->createProject($_POST);
             
-            $_SESSION['message'] = 'Project created successfully';
-            header('Location: index.php?page=projects');
+            if (!$newProjectId) {
+                throw new Exception('Failed to create project');
+            }
+            
+            // Only redirect on success
+            header('Location: index.php?page=projects&action=view&id=' . $newProjectId);
             exit;
         } catch (Exception $e) {
-            $_SESSION['error'] = $e->getMessage();
-            header('Location: index.php?page=projects&action=create');
-            exit;
+            // On failure, show form again with error
+            $projects = $this->projectModel->getAllProjects();
+            $userModel = new User($this->db);
+            $users = $userModel->getAllUsers();
+            $error = $e->getMessage();
+            
+            include 'views/projects/create.php';
         }
     }
 
+    private function redirectWithError($action, $error, $formData = null) {
+        $params = ['page' => 'projects', 'action' => $action];
+        if ($error) {
+            $params['error'] = $error;
+        }
+        if ($formData) {
+            // Store form data in query string for repopulation
+            $params = array_merge($params, $formData);
+        }
+        header('Location: index.php?' . http_build_query($params));
+        exit;
+    }
+
     private function validateProjectData($data) {
-        if (empty($data['PNAME']) || empty($data['PKEY']) || empty($data['LEAD'])) {
-            throw new Exception('Required fields are missing');
+        $errors = [];
+
+        if (empty($data['PNAME'])) {
+            $errors[] = 'Project name is required';
         }
 
-        if (!preg_match('/^[A-Z0-9]+$/', $data['PKEY'])) {
-            throw new Exception('Project key must contain only uppercase letters and numbers');
+        if (empty($data['PKEY'])) {
+            $errors[] = 'Project key is required';
+        } elseif (!preg_match('/^[A-Z0-9]+$/', $data['PKEY'])) {
+            $errors[] = 'Project key must contain only uppercase letters and numbers';
+        } elseif (!$this->projectModel->validateProjectKey($data['PKEY'])) {
+            $errors[] = 'Project key already exists';
         }
 
-        if (!$this->projectModel->validateProjectKey($data['PKEY'])) {
-            throw new Exception('Project key already exists');
+        if (empty($data['LEAD'])) {
+            $errors[] = 'Project lead is required';
+        }
+
+        if (empty($data['clone_project_id'])) {
+            $errors[] = 'Source project for workflow is required';
+        }
+
+        if (!empty($errors)) {
+            throw new Exception(implode("\n", $errors));
         }
     }
 
