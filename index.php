@@ -10,6 +10,11 @@ require_once 'classes/Workflow.php';
 require_once 'models/Sprint.php';
 require_once 'classes/SprintController.php';
 
+// Define application constants
+$appConfig = [
+    'name' => 'Project Agile'
+];
+
 $db = Database::getInstance($config)->getConnection();
 $page = $_GET['page'] ?? 'projects';
 $action = $_GET['action'] ?? 'index';
@@ -17,7 +22,7 @@ $id = isset($_GET['id']) ? intval($_GET['id']) : null;
 
 try {
     if ($page === 'projects') {
-        $controller = new ProjectController($db);
+        $controller = new ProjectController($db, $appConfig);
         switch ($action) {
             case 'index':
                 $controller->index();
@@ -49,7 +54,7 @@ try {
         }
     } 
     else if ($page === 'issues') {
-        $controller = new IssueController($db);
+        $controller = new IssueController($db, $appConfig);
         switch ($action) {
             case 'view':
                 if ($id === null) throw new Exception("Issue ID required");
@@ -112,7 +117,7 @@ try {
         }
     } 
     else if ($page === 'sprints') {
-        $controller = new SprintController($db);
+        $controller = new SprintController($db, $appConfig);
         switch ($action) {
             case 'list':
                 $controller->index();

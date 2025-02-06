@@ -1,5 +1,5 @@
 <?php 
-$pageTitle = htmlspecialchars($project['PNAME']) . ' | Project Agile';
+$pageTitle = htmlspecialchars($project['PNAME']) . ' | ' . $appName;
 include 'views/templates/header.php'; 
 ?>
 

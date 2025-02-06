@@ -2,10 +2,12 @@
 class IssueController {
     private $issueModel;
     private $projectModel;
-    private $db = null;
+    private $db;
+    private $config;
 
-    public function __construct($db) {
+    public function __construct($db, $config) {
         $this->db = $db;
+        $this->config = $config;
         $this->issueModel = new Issue($db);
         $this->projectModel = new Project($db);
     }
@@ -25,6 +27,7 @@ class IssueController {
         $history = $this->issueModel->getIssueHistory($id);
         $linkTypes = $this->issueModel->getAllLinkTypes();
         
+        $appName = $this->config['name'];
         include 'views/issues/view.php';
     }
     
@@ -35,6 +38,7 @@ class IssueController {
         }
         
         $issues = $this->issueModel->getProjectIssuesWithSubcomponents($projectId);
+        $appName = $this->config['name'];  // Add this line
         include 'views/issues/list.php';
     }
 
@@ -49,6 +53,7 @@ class IssueController {
         }
         
         $projects = $this->projectModel->getAllProjects();
+        $appName = $this->config['name'];  // Add this line
         include 'views/issues/search.php';
     }
 
@@ -78,6 +83,7 @@ class IssueController {
         $workflowModel = new Workflow($this->db);
         $statuses = $workflowModel->getWorkflowSteps($issue['PROJECT']);
         
+        $appName = $this->config['name'];
         include 'views/issues/edit.php';
     }
 
@@ -213,6 +219,7 @@ class IssueController {
         $workflowModel = new Workflow($this->db);
         $statuses = $workflowModel->getWorkflowSteps($projectId);
 
+        $appName = $this->config['name'];
         include 'views/issues/create.php';
     }
 
@@ -409,6 +416,7 @@ class IssueController {
             $boardColumns[$statusId][] = $issue;
         }
         
+        $appName = $this->config['name'];  // Add this line
         include 'views/projects/board.php';
     }
 

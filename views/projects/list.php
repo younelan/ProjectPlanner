@@ -1,5 +1,5 @@
 <?php 
-$pageTitle = 'Projects | Project Agile';
+$pageTitle = 'Projects | ' . $appName;
 include 'views/templates/header.php'; 
 ?>
 

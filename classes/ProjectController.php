@@ -16,16 +16,24 @@ class ProjectController {
     private $projectModel;
     private $issueModel;
     private $db;
-    public function __construct($db) {
-        // Ensure we store $db into $this->db so that $this->db is not null
+    private $config;
+
+    public function __construct($db, $config) {
         $this->db = $db;
+        $this->config = $config;
         $this->projectModel = new Project($db);
         $this->issueModel = new Issue($db);
-        $this->pdo=$db;
+        $this->pdo = $db;
     }
 
     public function index() {
         $projects = $this->projectModel->getAllProjects();
+        $appName = $this->config['name'];
+        $viewData = [
+            'appName' => $appName,
+            'projects' => $projects
+        ];
+        extract($viewData);
         include __DIR__ . '/../views/projects/list.php';
     }
 
@@ -33,7 +41,7 @@ class ProjectController {
         $project = $this->projectModel->getProjectById($id);
         if (!$project) {
             throw new Exception("Project not found");
-        }
+        }  // Added missing closing brace
         
         if (empty($project['PKEY'])) {
             throw new Exception("Invalid project configuration: missing PKEY");
@@ -42,6 +50,14 @@ class ProjectController {
         $issues = $this->issueModel->getIssuesByProject($project['ID']);
         $issuesWithLinks = $this->getIssueLinks($issues);
         
+        $appName = $this->config['name'];
+        $viewData = [
+            'appName' => $appName,
+            'project' => $project,
+            'issues' => $issues,
+            'issuesWithLinks' => $issuesWithLinks
+        ];
+        extract($viewData);
         include 'views/projects/view.php';
     }
 
@@ -69,6 +85,7 @@ class ProjectController {
         $workflowModel = new Workflow($this->db);
         $workflowSteps = $workflowModel->getWorkflowSteps($project['ID']);
         
+        $appName = $this->config['name'];
         include 'views/projects/board.php';
     }
 
@@ -118,6 +135,7 @@ class ProjectController {
             'tasksByTypeAggregate' => $tasksByTypeAggregate
         ];
         
+        $appName = $this->config['name'];
         // Pass $workflowPhases and $workflowStats to the view
         include __DIR__ . '/../views/projects/edit.php';
     }
@@ -155,6 +173,7 @@ class ProjectController {
         $error = $_SESSION['error'] ?? null;
         unset($_SESSION['error']);
         
+        $appName = $this->config['name'];
         include 'views/projects/create.php';
     }
 
@@ -182,6 +201,7 @@ class ProjectController {
             $users = $userModel->getAllUsers();
             $error = $e->getMessage();
             
+            $appName = $this->config['name'];
             include 'views/projects/create.php';
         }
     }

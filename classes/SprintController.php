@@ -4,9 +4,11 @@ class SprintController {
     private $db;
     private $sprintModel;
     private $workflowModel;  // Add workflow model
+    private $config;
 
-    public function __construct($db) {
+    public function __construct($db, $config) {
         $this->db = $db;
+        $this->config = $config;
         $this->sprintModel = new Sprint($db);
         $this->workflowModel = new Workflow($db);  // Initialize workflow model
     }
@@ -38,6 +40,7 @@ class SprintController {
         // Extract variables for the view
         extract($viewData);
         
+        $appName = $this->config['name'];
         include 'views/sprints/list.php';
     }
 
@@ -74,6 +77,7 @@ class SprintController {
         ];
         extract($viewData);
         
+        $appName = $this->config['name'];
         include 'views/sprints/board.php';
     }
 
