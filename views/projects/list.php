@@ -29,20 +29,18 @@ include 'views/templates/header.php';
 
     .page-header {
         background: linear-gradient(135deg, rgb(224 228 202) 0%, rgb(236, 215, 190) 100%);
-        padding: 1rem;
-        margin-bottom: 10px;
+        padding: 1rem 1.5rem;
+        margin: 0;
+        margin-bottom: 3px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-    }
-    .page-header h1 {
-        color: darkred;
     }
 
     .projects-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 0 1.5rem;
+        padding: 2rem;
     }
 
     .header-content {
@@ -52,8 +50,8 @@ include 'views/templates/header.php';
     }
 
     .page-title {
-        color: white;
-        font-size: 1.5rem;
+        color: darkred;
+        font-size: 1.25rem;
         font-weight: 600;
         margin: 0;
         display: flex;
@@ -63,9 +61,9 @@ include 'views/templates/header.php';
 
     .project-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
         gap: 1.5rem;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
 
     .project-card {
@@ -90,6 +88,12 @@ include 'views/templates/header.php';
         position: relative;
         background: #fafafa !important;
         color: #212529 !important;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .project-header:hover {
+        background: #f4f5f7 !important;
     }
 
     .project-header::before {
@@ -110,6 +114,14 @@ include 'views/templates/header.php';
         color: var(--color-text);
         text-decoration: none;
         flex: 1;
+    }
+
+    .project-header a {
+        text-decoration: none;
+    }
+
+    .project-header:hover .project-name {
+        color: var(--color-primary);
     }
 
     .project-key {
@@ -193,8 +205,8 @@ include 'views/templates/header.php';
     }
     .project-description {
         color: #42526e;
-        font-size: 0.95rem;
-        margin-bottom: 1.25rem;
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
         line-height: 1.5;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -203,47 +215,121 @@ include 'views/templates/header.php';
     }
     .project-actions {
         display: flex;
-        gap: 0.75rem;
-        margin-top: 1.25rem;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
     }
     .action-group {
         display: flex;
-        gap: 0.5rem;
-        flex: 1;
+        gap: 0.75rem;
+        margin: 0 0.75rem;
     }
     .btn {
-        padding: 0.6rem 1rem;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
         font-weight: 500;
-        border-radius: 6px;
-    }
-    .create-btn {
-        background: var(--color-primary);
-        color: #fff;
-        border: none;
-        padding: 0.5rem 1.25rem;
-        border-radius: 6px;
-        font-weight: 500;
+        border-radius: 3px;
+        white-space: nowrap;
+        min-width: 0;
         transition: all 0.2s;
     }
-    .create-btn:hover {
-        background: #1c6fe4;
-        color: #fff;
+    .btn i {
+        margin-right: 0.3rem;
+        font-size: 0.875rem;
     }
-    
+    .btn-primary {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+    }
+    .btn-outline-primary,
+    .btn-outline-info,
+    .btn-outline-secondary {
+        background: white;
+        border: 1px solid #dfe1e6;
+    }
+    .btn-outline-primary:hover,
+    .btn-outline-info:hover,
+    .btn-outline-secondary:hover {
+        background: #f4f5f7;
+    }
     @media (max-width: 768px) {
         .page-header {
-            position: sticky;
-            top: var(--nav-height);
-            z-index: 10;
+            position: relative; /* Remove sticky positioning */
+            padding: 1rem;
         }
 
-        .projects-grid {
-            padding: 0.5rem;
+        .projects-container {
+            padding: 0;
+        }
+
+        .project-grid {
+            margin-top: 0;
+            gap: 0;
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+        }
+
+        .create-btn {
+            padding: 0.4rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .projects-container {
+            padding: 0;
+        }
+
+        .project-grid {
+            grid-template-columns: 1fr;
+            gap: 0;
+            margin: 0;
         }
 
         .project-card {
             margin: 0;
             border-radius: 0;
+            border-left: none;
+            border-right: none;
+            border-bottom: 1px solid #e3e3e3;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-card:first-child {
+            border-top: none;
+        }
+
+        .project-card:last-child {
+            border-bottom: none;
+        }
+
+        .project-content {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .project-actions {
+            flex-wrap: nowrap;
+            width: 100%;
+            justify-content: space-between;
+            gap: 0.25rem;
+        }
+
+        .action-group {
+            flex: 1;
+            justify-content: center;
+            gap: 0.25rem;
+            margin: 0 0.25rem;
+        }
+
+        .btn {
+            padding: 0.35rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .btn i {
+            margin-right: 0.25rem;
         }
     }
 </style>
@@ -264,16 +350,18 @@ include 'views/templates/header.php';
             <?php foreach ($projects as $project): ?>
                 <div class="project-card">
                     <div class="project-header">
-                        <div class="project-title">
-                            <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>" class="project-name">
-                                <?= htmlspecialchars($project['PNAME']) ?>
-                            </a>
-                            <span class="project-key"><?= htmlspecialchars($project['PKEY']) ?></span>
-                        </div>
-                        <div class="project-lead">
-                            <i class="fas fa-user-circle"></i>
-                            <?= htmlspecialchars($project['LEAD']) ?>
-                        </div>
+                        <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>" class="d-block text-decoration-none">
+                            <div class="project-title">
+                                <span class="project-name">
+                                    <?= htmlspecialchars($project['PNAME']) ?>
+                                </span>
+                                <span class="project-key"><?= htmlspecialchars($project['PKEY']) ?></span>
+                            </div>
+                            <div class="project-lead">
+                                <i class="fas fa-user-circle"></i>
+                                <?= htmlspecialchars($project['LEAD']) ?>
+                            </div>
+                        </a>
                     </div>
                     
                     <div class="project-content">
