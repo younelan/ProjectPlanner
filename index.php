@@ -11,9 +11,8 @@ require_once 'models/Sprint.php';
 require_once 'classes/SprintController.php';
 
 // Define application constants
-$appConfig = [
-    'name' => 'Project Agile'
-];
+$appConfig=$config ?? [];
+$appConfig['name'] = $config['name'] ?? 'Project Agile';
 
 $db = Database::getInstance($config)->getConnection();
 $page = $_GET['page'] ?? 'projects';
