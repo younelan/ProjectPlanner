@@ -46,13 +46,27 @@
         .table th {
             background-color: #f4f5f7;
         }
+        .app-logo {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+        }
+        
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            font-size: 1.4rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="index.php">
-                <i class="fas fa-tasks"></i> <?= htmlspecialchars($appName) ?>
+                <img src="assets/images/logo.svg" alt="Logo" class="app-logo">
+                <?= htmlspecialchars($appName) ?>
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

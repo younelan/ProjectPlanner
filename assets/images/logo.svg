@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+    <!-- Background shape -->
+    <path d="M10 8C10 6.89543 10.8954 6 12 6H36C37.1046 6 38 6.89543 38 8V40C38 41.1046 37.1046 42 36 42H12C10.8954 42 10 41.1046 10 40V8Z" 
+          fill="#FF7452"/>
+    
+    <!-- Middle layer -->
+    <path d="M16 14C16 12.8954 16.8954 12 18 12H30C31.1046 12 32 12.8954 32 14V34C32 35.1046 31.1046 36 30 36H18C16.8954 36 16 35.1046 16 34V14Z" 
+          fill="#FFF" fill-opacity="0.3"/>
+    
+    <!-- Task bars -->
+    <path d="M20 20H28M20 26H28M20 32H24" 
+          stroke="#FFF" stroke-width="3" stroke-linecap="round"/>
+    
+    <!-- Connection dots -->
+    <circle cx="16" cy="20" r="2" fill="#FFF"/>
+    <circle cx="16" cy="26" r="2" fill="#FFF"/>
+    <circle cx="16" cy="32" r="2" fill="#FFF"/>
+    
+    <!-- Corner accent -->
+    <path d="M32 12L38 6M32 6L38 12" 
+          stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+</svg>
