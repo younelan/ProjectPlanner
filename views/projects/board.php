@@ -282,13 +282,90 @@ const boardView = {
         // Convert workflow object to array and sort by SEQUENCE
         const sortedWorkflow = Object.values(this.data.workflow || {}).sort((a, b) => Number(a.SEQUENCE) - Number(b.SEQUENCE));
         
+        // Find issues with states not in current workflow
+        const workflowStateIds = new Set(sortedWorkflow.map(s => String(s.ID)));
+        const orphanedIssues = this.data.issues.filter(issue => 
+            !workflowStateIds.has(String(issue.STATUS_ID || issue.ISSUESTATUS)) &&
+            this.selectedTypes.has(issue.TYPE)
+        );
+        
         container.className = 'board-container d-flex';
         
+        // Render regular workflow columns
         sortedWorkflow.forEach((status) => {
             const column = this.createColumn(status, this.getIssuesForStatus(status.ID));
             container.appendChild(column);
         });
+        
+        // If there are orphaned issues, create a special column for them
+        if (orphanedIssues.length > 0) {
+            const orphanedColumn = this.createOrphanedColumn(orphanedIssues);
+            container.appendChild(orphanedColumn);
+        }
+        
         this.setupDragAndDrop();
+    },
+
+    createOrphanedColumn(issues) {
+        const column = document.createElement('div');
+        column.className = 'board-column orphaned-column';
+        column.innerHTML = `
+            <div class="board-column-header bg-warning">
+                <h5>Other States
+                    <span class="badge badge-pill badge-secondary">${issues.length}</span>
+                </h5>
+                <small class="text-muted">Issues in states not in current workflow</small>
+            </div>
+            <div class="issue-list" data-status-id="orphaned">
+                ${issues.map(issue => this.createIssueCard(issue, true)).join('')}
+            </div>
+        `;
+        return column;
+    },
+
+    createIssueCard(issue, isOrphaned = false) {
+        return `
+            <div class="card issue-card ${isOrphaned ? 'orphaned-issue' : ''}" data-issue-id="${issue.ID}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <span class="badge badge-info">${issue.TYPE}</span>
+                        ${isOrphaned ? `<span class="badge badge-warning">State: ${issue.STATUS || 'Unknown'}</span>` : ''}
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-link simple-dropdown-toggle" type="button" onclick="toggleSimpleDropdown(this)">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
+                                <a class="dropdown-item" href="index.php?page=issues&action=view&id=${issue.ID}">View Issue</a>
+                                <div class="dropdown-submenu">
+                                    <button type="button" class="dropdown-item simple-dropdown-toggle" onclick="toggleSubMenu(this)">Set State</button>
+                                    <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
+                                        ${Object.values(this.data.workflow || {}).map(state =>
+                                            renderStateDropdownItem(issue, state)
+                                        ).join('')}
+                                    </div>
+                                </div>
+                                <div class="dropdown-submenu">
+                                    <button type="button" class="dropdown-item simple-dropdown-toggle" onclick="toggleSubMenu(this)">Assign To</button>
+                                    <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
+                                        ${(this.data.users || []).map(user =>
+                                            `<a class="dropdown-item" href="#" onclick="assignTo(${issue.ID}, '${user.username}'); return false;">${user.name}</a>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="index.php?page=issues&action=view&id=${issue.ID}" class="text-dark text-decoration-none">
+                        ${issue.SUMMARY}
+                    </a>
+                    ${issue.ASSIGNEE ? `
+                        <div class="mt-2">
+                            <small class="text-muted"><i class="fas fa-user"></i> ${issue.ASSIGNEE}</small>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
     },
 
     getIssuesForStatus(statusId) {
@@ -305,8 +382,14 @@ const boardView = {
                 group: 'shared',
                 animation: 150,
                 ghostClass: 'bg-light',
-                emptyInsertThreshold: 50, // added threshold to enable dropping in lower empty zone
+                emptyInsertThreshold: 50,
                 onEnd: function(evt) {
+                    // Don't allow dropping into orphaned column
+                    if (evt.to.dataset.statusId === 'orphaned') {
+                        evt.from.appendChild(evt.item);
+                        return;
+                    }
+                    
                     const issueId = evt.item.dataset.issueId;
                     const newStatusId = evt.to.dataset.statusId;
                     
@@ -346,51 +429,6 @@ const boardView = {
             </div>
         `;
         return column;
-    },
-
-    createIssueCard(issue) {
-        return `
-            <div class="card issue-card" data-issue-id="${issue.ID}">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <span class="badge badge-info">${issue.TYPE}</span>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-link simple-dropdown-toggle" type="button" onclick="toggleSimpleDropdown(this)">
-                                <i class="fas fa-cog"></i>
-                            </button>
-                            <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
-                                <!-- Added "View Issue" menu entry -->
-                                <a class="dropdown-item" href="index.php?page=issues&action=view&id=${issue.ID}">View Issue</a>
-                                <div class="dropdown-submenu">
-                                    <button type="button" class="dropdown-item simple-dropdown-toggle" onclick="toggleSubMenu(this)">Set State</button>
-                                    <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
-                                        ${Object.values(this.data.workflow || {}).map(state =>
-                                            renderStateDropdownItem(issue, state)
-                                        ).join('')}
-                                    </div>
-                                </div>
-                                <div class="dropdown-submenu">
-                                    <button type="button" class="dropdown-item simple-dropdown-toggle" onclick="toggleSubMenu(this)">Assign To</button>
-                                    <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
-                                        ${(this.data.users || []).map(user =>
-                                            `<a class="dropdown-item" href="#" onclick="assignTo(${issue.ID}, '${user.username}'); return false;">${user.name}</a>`
-                                        ).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <a href="index.php?page=issues&action=view&id=${issue.ID}" class="text-dark text-decoration-none">
-                        ${issue.SUMMARY}
-                    </a>
-                    ${issue.ASSIGNEE ? `
-                        <div class="mt-2">
-                            <small class="text-muted"><i class="fas fa-user"></i> ${issue.ASSIGNEE}</small>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
     },
 
     changeView(view) {
@@ -739,6 +777,27 @@ function hideModal() {
 
 .issue-list {
     min-height: 50px; // added min-height so empty columns are droppable
+}
+
+.orphaned-column {
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+}
+
+.orphaned-issue {
+    background: #fffbf3;
+    border: 1px solid #ffeeba;
+}
+
+.orphaned-column .board-column-header {
+    background: #fff3cd;
+    border-bottom: 1px solid #ffeeba;
+}
+
+.orphaned-column small {
+    display: block;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
 }
 </style>
 
