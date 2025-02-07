@@ -41,7 +41,9 @@ class Sprint {
                     ji.*,
                     p.PKEY as ProjectKey,
                     CONCAT(p.PKEY, '-', ji.ISSUENUM) as IssueKey,
-                    cu.display_name as ASSIGNEE
+                    cu.display_name as ASSIGNEE,
+                    t.pname as ISSUETYPE,  /* Changed TYPE to ISSUETYPE to match database */
+                    ist.pname as STATUS 
                 FROM 
                     CUSTOMFIELDVALUE cfv
                 JOIN 
@@ -54,6 +56,10 @@ class Sprint {
                     APP_USER au ON ji.ASSIGNEE = au.USER_KEY
                 LEFT JOIN
                     CWD_USER cu ON au.USER_KEY = cu.user_name
+                LEFT JOIN 
+                    ISSUETYPE t ON ji.ISSUETYPE = t.ID
+                LEFT JOIN
+                    ISSUESTATUS ist ON ji.ISSUESTATUS = ist.ID
                 WHERE 
                     cf.CFNAME = 'Sprint'
                     AND cfv.STRINGVALUE = ?";
