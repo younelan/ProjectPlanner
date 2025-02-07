@@ -1,5 +1,6 @@
 <?php 
 $pageTitle = "Edit Issue: " . htmlspecialchars($issue['SUMMARY']);
+$projectName = isset($project['PNAME']) ? $project['PNAME'] : 'Project';  // Add project name variable
 include 'views/templates/header.php'; 
 ?>
 
@@ -109,26 +110,77 @@ select.form-control {
         border-bottom: 1px solid #dee2e6;
     }
 }
+
+.page-header {
+    background: linear-gradient(135deg, rgb(224 228 202) 0%, rgb(236, 215, 190) 100%);
+    padding: 1rem 1.5rem;
+    margin: 0;
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.breadcrumb {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.breadcrumb-item {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: darkred;
+}
+
+.breadcrumb-item a {
+    color: darkred;
+    text-decoration: none;
+}
+
+.breadcrumb-item.active {
+    color: darkred;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    color: darkred;
+    content: "›";
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 0 0.5rem;
+}
 </style>
+
+<div class="page-header">
+    <div class="d-flex align-items-center">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <i class="fas fa-project-diagram"></i>
+                    <a href="index.php">Projects</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="index.php?page=projects&action=view&id=<?= $issue['PROJECT'] ?>">
+                        <?= htmlspecialchars($projectName) ?>
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="index.php?page=issues&action=view&id=<?= $issue['ID'] ?>">
+                        <?= htmlspecialchars($issue['SUMMARY']) ?>
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Edit</li>
+            </ol>
+        </nav>
+    </div>
+</div>
 
 <div class="row">
     <div class="col-md-12">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="index.php">Projects</a></li>
-                <li class="breadcrumb-item">
-                    <a href="index.php?page=projects&action=view&id=<?= htmlspecialchars($issue['PROJECT']) ?>">
-                        Project
-                    </a>
-                </li>
-                <li class="breadcrumb-item active">Edit Issue</li>
-            </ol>
-        </nav>
-
         <div class="card">
-            <div class="card-header">
-                <h2 class="mb-0">Edit Issue</h2>
-            </div>
             <div class="card-body">
                 <form action="index.php?page=issues&action=update&id=<?= $issue['ID'] ?>" method="POST">
                     <div class="form-group">
