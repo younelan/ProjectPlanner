@@ -1,27 +1,80 @@
 <?php 
 $pageTitle = "Issue: " . htmlspecialchars($issue['SUMMARY']);
+$projectName = isset($project['PNAME']) ? $project['PNAME'] : 'Project';  // Add project name variable
 include 'views/templates/header.php'; 
 ?>
 
-<div class="row">
-    <div class="col-md-12">
+<style>
+    .page-header {
+        background: linear-gradient(135deg, rgb(224 228 202) 0%, rgb(236, 215, 190) 100%);
+        padding: 1rem 1.5rem;
+        margin: 0;
+        margin-bottom: 3px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .breadcrumb {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breadcrumb-item {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: darkred;
+    }
+
+    .breadcrumb-item a {
+        color: darkred;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+        color: darkred;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: darkred;
+        content: "›";
+        font-size: 1.4rem;
+        line-height: 1;
+        padding: 0 0.5rem;
+    }
+</style>
+
+<div class="page-header">
+    <div class="d-flex align-items-center">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="index.php">Projects</a></li>
-                <li class="breadcrumb-item"><a href="index.php?page=projects&action=view&id=<?= htmlspecialchars($issue['PROJECT']) ?>">Project</a></li>
+                <li class="breadcrumb-item">
+                    <i class="fas fa-project-diagram"></i>
+                    <a href="index.php">Projects</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="index.php?page=projects&action=view&id=<?= $issue['PROJECT'] ?>">
+                        <?= htmlspecialchars($projectName) ?>
+                    </a>
+                </li>
                 <li class="breadcrumb-item active"><?= htmlspecialchars($issue['SUMMARY']) ?></li>
             </ol>
         </nav>
+    </div>
+    <div class="btn-group">
+        <a href="index.php?page=issues&action=edit&id=<?= $issue['ID'] ?>" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Edit Issue
+        </a>
+    </div>
+</div>
 
+<div class="row">
+    <div class="col-md-12">
         <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h2 class="mb-0"><?= htmlspecialchars($issue['SUMMARY']) ?></h2>
-                <div>
-                    <a href="index.php?page=issues&action=edit&id=<?= $issue['ID'] ?>" class="btn btn-outline-primary">
-                        <i class="fas fa-edit"></i> Edit Issue
-                    </a>
-                </div>
-            </div>
             <div class="card-body">
                 <table class="table table-bordered">
                     <tbody>
