@@ -435,13 +435,9 @@ class IssueController {
         }
 
         try {
-            // Get status name before updating
-            $stmt = $this->db->prepare("SELECT s.pname FROM issuestatus s WHERE s.id = ?");
-            $stmt->execute([$data['statusId']]);
-            $statusName = $stmt->fetchColumn();
-
-            $stmt = $this->db->prepare("UPDATE JIRAISSUE SET ISSUESTATUS = ?, STATUS = ? WHERE ID = ?");
-            $stmt->execute([$data['statusId'], $statusName, $data['issueId']]);
+            // Only update ISSUESTATUS field - don't try to update non-existent STATUS field
+            $stmt = $this->db->prepare("UPDATE JIRAISSUE SET ISSUESTATUS = ? WHERE ID = ?");
+            $stmt->execute([$data['statusId'], $data['issueId']]);
             
             echo json_encode(['success' => true]);
         } catch (Exception $e) {
