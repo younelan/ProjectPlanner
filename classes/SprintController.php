@@ -58,7 +58,7 @@ class SprintController {
             // API endpoint for board data
             $workflowSteps = $this->workflowModel->getWorkflowSteps($sprint['PROJECT_ID']);
             $userModel = new User($this->db);
-            
+
             echo json_encode([
                 'workflow' => $workflowSteps,
                 'issues' => $this->sprintModel->getSprintIssues($id),

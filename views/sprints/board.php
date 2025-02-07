@@ -167,11 +167,9 @@ include 'views/templates/header.php';
     min-width: 200px;
     box-shadow: 0 2px 4px rgba(0,0,0,.1);
     border: 1px solid rgba(0,0,0,.125);
-}
-
-.dropdown-item {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
+    position: absolute;
+    right: 0;  /* Align to right instead of left */
+    left: auto !important;  /* Override Bootstrap's left positioning */
 }
 
 .dropdown-submenu {
@@ -180,8 +178,48 @@ include 'views/templates/header.php';
 
 .dropdown-submenu .dropdown-menu {
     top: 0;
-    left: 100%;
-    margin-top: -1px;
+    right: 100%;  /* Open to the left instead of right */
+    left: auto;
+    margin-right: -1px;  /* Negative margin to overlap with parent menu */
+    margin-left: 0;
+}
+
+/* Adjust submenu indicators for right-aligned dropdowns */
+.dropdown-submenu .dropdown-item {
+    padding-left: 1rem;
+    padding-right: 1.5rem;
+}
+
+.dropdown-submenu .dropdown-toggle::after {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%) rotate(180deg); /* Flip the arrow for right alignment */
+}
+
+/* Ensure dropdowns stay in view on mobile */
+@media (max-width: 768px) {
+    .dropdown-menu {
+        position: fixed !important;
+        top: auto !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100%;
+        max-height: 50vh;
+        overflow-y: auto;
+        margin: 0;
+        border-radius: 1rem 1rem 0 0;
+    }
+
+    .dropdown-submenu .dropdown-menu {
+        position: static !important;
+        margin-left: 1rem;
+        margin-right: 0;
+        box-shadow: none;
+        border-left: 2px solid var(--primary);
+        width: auto;
+    }
 }
 
 /* Mobile Responsive */
@@ -283,10 +321,53 @@ include 'views/templates/header.php';
     border-top: none;
     border-radius: 0 0 0.25rem 0.25rem;
 }
+
+/* Additional styles */
+.form-check {
+    margin-right: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.gap-3 {
+    gap: 1rem;
+}
+
+.orphaned-column {
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+}
+
+.orphaned-issue {
+    background: #fffbf3;
+    border: 1px solid #ffeeba;
+}
+
+.orphaned-column .board-column-header {
+    background: #fff3cd;
+    border-bottom: 1px solid #ffeeba;
+}
+
+.orphaned-column small {
+    display: block;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
 </style>
 
 <div id="boardContainer">
     <div id="board"></div>
+
+    <!-- Add this filter card -->
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5 class="mb-0">Filter by Issue Type</h5>
+        </div>
+        <div class="card-body">
+            <div id="boardIssueTypeFilters" class="d-flex flex-wrap gap-3">
+                <!-- Issue type checkboxes will be dynamically added here -->
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -297,6 +378,7 @@ const sprintBoard = {
     data: null,
     async init() {
         await this.loadData();
+        await this.setupTypeFilters(); // Add this line
         this.setupEventListeners();
         this.render();
         this.initializeDropdowns();
@@ -372,28 +454,52 @@ const sprintBoard = {
         // Convert workflow object to array and sort by SEQUENCE
         const sortedWorkflow = Object.values(this.data.workflow || {}).sort((a, b) => Number(a.SEQUENCE) - Number(b.SEQUENCE));
         
+        // Find issues with states not in current workflow
+        const workflowStateIds = new Set(sortedWorkflow.map(s => String(s.ID)));
+        const orphanedIssues = this.data.issues.filter(issue => 
+            !workflowStateIds.has(String(issue.ISSUESTATUS))
+        );
+        
         container.className = 'board-container d-flex';
         
+        // Render regular workflow columns
         sortedWorkflow.forEach((status) => {
             const column = this.createColumn(status, this.getIssuesForStatus(status.ID));
             container.appendChild(column);
         });
+        
+        // If there are orphaned issues, create a special column for them
+        if (orphanedIssues.length > 0) {
+            const filteredOrphanedIssues = orphanedIssues.filter(issue => 
+                this.selectedTypes.has(issue.ISSUETYPE)
+            );
+            const orphanedColumn = this.createOrphanedColumn(filteredOrphanedIssues);
+            container.appendChild(orphanedColumn);
+        }
+        
         this.setupDragAndDrop();
     },
 
     getIssuesForStatus(statusId) {
         // Simply match the status IDs directly from workflow
-        return this.data.issues.filter(i => String(i.ISSUESTATUS) === String(statusId));
+        return this.data.issues.filter(i => 
+            String(i.ISSUESTATUS) === String(statusId) &&
+            this.selectedTypes.has(i.ISSUETYPE)
+        );
     },
 
     setupDragAndDrop() {
         const lists = document.querySelectorAll('.issue-list');
         lists.forEach(list => {
-            new Sortable(list, {
-                group: 'shared',
+            const options = {
+                group: {
+                    name: 'shared',
+                    pull: true,
+                    put: list.dataset.statusId !== 'orphaned'
+                },
                 animation: 150,
                 ghostClass: 'bg-light',
-                emptyInsertThreshold: 50, // added threshold to enable dropping in lower empty zone
+                emptyInsertThreshold: 50,
                 onEnd: function(evt) {
                     const issueId = evt.item.dataset.issueId;
                     const newStatusId = evt.to.dataset.statusId;
@@ -416,7 +522,8 @@ const sprintBoard = {
                         sprintBoard.init();
                     });
                 }
-            });
+            };
+            new Sortable(list, options);
         });
     },
 
@@ -436,12 +543,18 @@ const sprintBoard = {
         return column;
     },
 
-    createIssueCard(issue) {
+    createIssueCard(issue, isOrphaned = false) {
+        // Get the actual state name directly from the issue's STATUS field
+        const stateName = isOrphaned ? 
+            issue.STATUS || 'Unknown' : 
+            Object.values(this.data.workflow).find(w => w.ID === issue.ISSUESTATUS)?.PNAME || 'Unknown';
+
         return `
-            <div class="card issue-card" data-issue-id="${issue.ID}">
+            <div class="card issue-card ${isOrphaned ? 'orphaned-issue' : ''}" data-issue-id="${issue.ID}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <span class="badge badge-info">${issue.ISSUETYPE}</span>
+                        ${isOrphaned ? `<span class="badge badge-warning">State: ${stateName}</span>` : ''}
                         <div class="dropdown">
                             <button class="btn btn-sm btn-link simple-dropdown-toggle" type="button" onclick="toggleSimpleDropdown(this)">
                                 <i class="fas fa-cog"></i>
@@ -482,6 +595,23 @@ const sprintBoard = {
         `;
     },
 
+    createOrphanedColumn(issues) {
+        const column = document.createElement('div');
+        column.className = 'board-column orphaned-column';
+        column.innerHTML = `
+            <div class="board-column-header bg-warning">
+                <h5>Other States
+                    <span class="badge badge-pill badge-secondary">${issues.length}</span>
+                </h5>
+                <small class="text-muted">Issues in states not in current workflow</small>
+            </div>
+            <div class="issue-list" data-status-id="orphaned">
+                ${issues.map(issue => this.createIssueCard(issue, true)).join('')}
+            </div>
+        `;
+        return column;
+    },
+
     changeView(view) {
         this.currentView = view;
         this.render();
@@ -489,6 +619,52 @@ const sprintBoard = {
 
     initializeDropdowns() { 
         // No external library needed
+    },
+
+    setupTypeFilters() {
+        // Get unique issue types from ALL issues including orphaned ones
+        const issueTypes = [...new Set(this.data.issues.map(issue => issue.ISSUETYPE))];
+        
+        // Use sprint-specific storage key
+        const storageKey = `sprintBoardSelectedTypes-${this.data.sprint.ID}`;
+        
+        // Initialize selected types from localStorage or all types
+        this.selectedTypes = new Set(
+            JSON.parse(localStorage.getItem(storageKey)) || 
+            issueTypes
+        );
+
+        // Create filters
+        const filterContainer = document.getElementById('boardIssueTypeFilters');
+        filterContainer.innerHTML = ''; // Clear existing filters
+        
+        // Sort issue types alphabetically
+        issueTypes.sort().forEach(type => {
+            const div = document.createElement('div');
+            div.className = 'form-check';
+            div.innerHTML = `
+                <input class="form-check-input board-type-filter" type="checkbox" 
+                       id="board-type-${type}" value="${type}" 
+                       ${this.selectedTypes.has(type) ? 'checked' : ''}>
+                <label class="form-check-label" for="board-type-${type}">
+                    ${type}
+                </label>
+            `;
+            filterContainer.appendChild(div);
+        });
+
+        // Add event listeners
+        document.querySelectorAll('.board-type-filter').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    this.selectedTypes.add(checkbox.value);
+                } else {
+                    this.selectedTypes.delete(checkbox.value);
+                }
+                localStorage.setItem(storageKey, JSON.stringify([...this.selectedTypes]));
+                this.render();
+            });
+        });
     }
 };
 

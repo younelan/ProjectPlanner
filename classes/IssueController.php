@@ -435,10 +435,14 @@ class IssueController {
         }
 
         try {
-            $stmt = $this->db->prepare("UPDATE JIRAISSUE SET ISSUESTATUS = ? WHERE ID = ?");
-            $stmt->execute([$data['statusId'], $data['issueId']]);
+            // Get status name before updating
+            $stmt = $this->db->prepare("SELECT s.pname FROM issuestatus s WHERE s.id = ?");
+            $stmt->execute([$data['statusId']]);
+            $statusName = $stmt->fetchColumn();
+
+            $stmt = $this->db->prepare("UPDATE JIRAISSUE SET ISSUESTATUS = ?, STATUS = ? WHERE ID = ?");
+            $stmt->execute([$data['statusId'], $statusName, $data['issueId']]);
             
-            // The issue stays in the sprint - we're just updating its status
             echo json_encode(['success' => true]);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
