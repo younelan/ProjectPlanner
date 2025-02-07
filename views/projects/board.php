@@ -88,6 +88,17 @@ include 'views/templates/header.php';
   </div>
 </div>
 
+<div class="card mt-3">
+    <div class="card-header">
+        <h5 class="mb-0">Filter by Issue Type</h5>
+    </div>
+    <div class="card-body">
+        <div id="boardIssueTypeFilters" class="d-flex flex-wrap gap-3">
+            <!-- Issue type checkboxes will be dynamically added here -->
+        </div>
+    </div>
+</div>
+
 <script>
 // ...existing code...
 const boardView = {
@@ -97,7 +108,6 @@ const boardView = {
     async init() {
         await this.loadData();
         this.setupEventListeners();
-        this.render();
         this.initializeDropdowns();
     },
 
@@ -105,6 +115,54 @@ const boardView = {
         const response = await fetch('index.php?page=projects&action=board&id=<?= $_GET['id'] ?>&api=1');
         this.data = await response.json();
         document.getElementById('projectName').textContent = this.data.project.PNAME;
+        await this.setupTypeFilters();
+        this.render(); // Move render here, after filters are set up
+    },
+
+    setupTypeFilters() {
+        // Get unique issue types
+        const issueTypes = [...new Set(this.data.issues.map(issue => issue.TYPE))];
+        
+        // Use project-specific storage key
+        const storageKey = `boardViewSelectedTypes-${this.data.project.ID}`;
+        
+        // Initialize selected types from localStorage or all types
+        this.selectedTypes = new Set(
+            JSON.parse(localStorage.getItem(storageKey)) || 
+            issueTypes
+        );
+
+        // Create filters
+        const filterContainer = document.getElementById('boardIssueTypeFilters');
+        filterContainer.innerHTML = ''; // Clear existing filters
+        
+        issueTypes.forEach(type => {
+            const div = document.createElement('div');
+            div.className = 'form-check';
+            div.innerHTML = `
+                <input class="form-check-input board-type-filter" type="checkbox" 
+                       id="board-type-${type}" value="${type}" 
+                       ${this.selectedTypes.has(type) ? 'checked' : ''}>
+                <label class="form-check-label" for="board-type-${type}">
+                    ${type}
+                </label>
+            `;
+            filterContainer.appendChild(div);
+        });
+
+        // Add event listeners
+        document.querySelectorAll('.board-type-filter').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    this.selectedTypes.add(checkbox.value);
+                } else {
+                    this.selectedTypes.delete(checkbox.value);
+                }
+                // Save to localStorage
+                localStorage.setItem(storageKey, JSON.stringify([...this.selectedTypes]));
+                this.render();
+            });
+        });
     },
 
     setupEventListeners() {
@@ -179,7 +237,10 @@ const boardView = {
     },
 
     getIssuesForStatus(statusId) {
-        return this.data.issues.filter(i => String(i.STATUS_ID || i.ISSUESTATUS) === String(statusId));
+        return this.data.issues.filter(i => 
+            String(i.STATUS_ID || i.ISSUESTATUS) === String(statusId) &&
+            this.selectedTypes.has(i.TYPE)
+        );
     },
 
     setupDragAndDrop() {

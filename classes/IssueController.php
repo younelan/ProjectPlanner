@@ -105,17 +105,24 @@ class IssueController {
     }
 
     public function addLink($id) {
-        if (!isset($_POST['linkedIssueId']) || !isset($_POST['linkType'])) {
-            throw new Exception("Missing required fields");
+        header('Content-Type: application/json');
+        
+        if (!isset($_POST['linkedIssueId']) || empty($_POST['linkedIssueId']) || 
+            !isset($_POST['linkType']) || empty($_POST['linkType'])) {
+            echo json_encode(['success' => false, 'error' => 'Please select an issue and link type']);
+            exit;
         }
 
-        $this->issueModel->addIssueLink(
-            $id,
-            $_POST['linkedIssueId'],
-            $_POST['linkType']
-        );
-
-        header("Location: index.php?page=issues&action=view&id=" . $id);
+        try {
+            $this->issueModel->addIssueLink(
+                $id,
+                $_POST['linkedIssueId'],
+                $_POST['linkType']
+            );
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => 'Failed to create link']);
+        }
         exit;
     }
 

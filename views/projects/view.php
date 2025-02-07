@@ -55,6 +55,18 @@ include 'views/templates/header.php';
     </div>
 </div>
 
+<!-- Add Issue Type Filter Section -->
+<div class="card mt-3">
+    <div class="card-header">
+        <h5 class="mb-0">Filter by Issue Type</h5>
+    </div>
+    <div class="card-body">
+        <div id="issueTypeFilters" class="d-flex flex-wrap gap-3">
+            <!-- Issue type checkboxes will be dynamically added here -->
+        </div>
+    </div>
+</div>
+
 <div class="row mb-4">
     <div class="col">
         <div class="card">
@@ -269,6 +281,23 @@ a.text-dark:hover {
         margin-bottom: 1rem;
     }
 }
+
+/* Add styles for type filters */
+.gap-3 {
+    gap: 1rem !important;
+}
+
+.form-check {
+    padding: 0.5rem 1rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    margin: 0;
+}
+
+.form-check-input:checked {
+    background-color: #0052cc;
+    border-color: #0052cc;
+}
 </style>
 
 <script>
@@ -384,11 +413,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function filterIssues() {
         const searchTerm = filterInput.value.toLowerCase();
         const filtered = issues.filter(issue => 
-            issue.SUMMARY.toLowerCase().includes(searchTerm) ||
-            issue.TYPE.toLowerCase().includes(searchTerm) ||
-            (issue.ASSIGNEE && issue.ASSIGNEE.toLowerCase().includes(searchTerm)) ||
-            issue.STATUS.toLowerCase().includes(searchTerm) ||
-            (issue.PRIORITY && issue.PRIORITY.toLowerCase().includes(searchTerm))
+            (selectedTypes.has(issue.TYPE)) && // Add type filter condition
+            (
+                issue.SUMMARY.toLowerCase().includes(searchTerm) ||
+                issue.TYPE.toLowerCase().includes(searchTerm) ||
+                (issue.ASSIGNEE && issue.ASSIGNEE.toLowerCase().includes(searchTerm)) ||
+                issue.STATUS.toLowerCase().includes(searchTerm) ||
+                (issue.PRIORITY && issue.PRIORITY.toLowerCase().includes(searchTerm))
+            )
         );
         
         if (currentSort.column) {
@@ -472,6 +504,74 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Track selected issue types
+    // Use project-specific storage key
+    const storageKey = `projectViewSelectedTypes-${project.ID}`;
+    
+    // Initialize selectedTypes from localStorage or create new Set
+    let selectedTypes = new Set(
+        JSON.parse(localStorage.getItem(storageKey)) || 
+        issues.map(issue => issue.TYPE)
+    );
+
+    // Get unique issue types from issues array
+    const issueTypes = [...new Set(issues.map(issue => issue.TYPE))];
+    
+    // Create and populate issue type filters
+    const filterContainer = document.getElementById('issueTypeFilters');
+    issueTypes.forEach(type => {
+        const div = document.createElement('div');
+        div.className = 'form-check';
+        div.innerHTML = `
+            <input class="form-check-input issue-type-filter" type="checkbox" 
+                   id="type-${type}" value="${type}" 
+                   ${selectedTypes.has(type) ? 'checked' : ''}>
+            <label class="form-check-label" for="type-${type}">
+                ${type}
+            </label>
+        `;
+        filterContainer.appendChild(div);
+    });
+
+    // Add event listeners for type filters
+    document.querySelectorAll('.issue-type-filter').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                selectedTypes.add(this.value);
+            } else {
+                selectedTypes.delete(this.value);
+            }
+            // Save to localStorage
+            localStorage.setItem(storageKey, JSON.stringify([...selectedTypes]));
+            filterIssues();
+        });
+    });
+
+    // Update filterIssues function to include type filtering
+    function filterIssues() {
+        const searchTerm = filterInput.value.toLowerCase();
+        const filtered = issues.filter(issue => 
+            (selectedTypes.has(issue.TYPE)) && // Add type filter condition
+            (
+                issue.SUMMARY.toLowerCase().includes(searchTerm) ||
+                issue.TYPE.toLowerCase().includes(searchTerm) ||
+                (issue.ASSIGNEE && issue.ASSIGNEE.toLowerCase().includes(searchTerm)) ||
+                issue.STATUS.toLowerCase().includes(searchTerm) ||
+                (issue.PRIORITY && issue.PRIORITY.toLowerCase().includes(searchTerm))
+            )
+        );
+        
+        if (currentSort.column) {
+            sortIssues(filtered, currentSort.column, currentSort.direction);
+        }
+        renderIssues(filtered);
+    }
+
+    // Initial render with filtered issues
+    filterIssues(); // Add this line to apply filters on load
+
+    // ...rest of existing code...
 });
 </script>
 

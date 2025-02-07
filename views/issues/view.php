@@ -145,7 +145,7 @@ include 'views/templates/header.php';
                             <span>&times;</span>
                         </button>
                     </div>
-                    <form action="index.php?page=issues&action=addLink&id=<?= $issue['ID'] ?>" method="POST">
+                    <form id="linkIssueForm" action="index.php?page=issues&action=addLink&id=<?= $issue['ID'] ?>" method="POST">
                         <div class="modal-body">
                             <div class="form-group">
                                 <label for="linkType">Link Type</label>
@@ -302,6 +302,32 @@ include 'views/templates/header.php';
             if (!searchInput.contains(e.target)) {
                 searchResults.style.display = 'none';
             }
+        });
+
+        // Handle link form submission via AJAX
+        document.getElementById('linkIssueForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent form from submitting normally
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page on success
+                    window.location.reload();
+                } else {
+                    // Show error message
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while creating the link');
+            });
         });
     });
 </script>
