@@ -3,66 +3,116 @@ $pageTitle = isset($project) ? "Sprints - " . htmlspecialchars($project['PNAME']
 include 'views/templates/header.php';
 ?>
 
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>
-            <?php if (isset($project)): ?>
-                <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>" class="text-dark">
-                    <?= htmlspecialchars($project['PNAME']) ?>
-                </a> - 
-            <?php endif; ?>
-            Sprints
-        </h2>
-        <?php if (isset($project)): ?>
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createSprintModal">
-                <i class="fas fa-plus"></i> Create Sprint
-            </button>
-        <?php endif; ?>
-    </div>
+<style>
+    .page-header {
+        background: linear-gradient(135deg, rgb(224 228 202) 0%, rgb(236, 215, 190) 100%);
+        padding: 1rem 1.5rem;
+        margin: 0;
+        margin-bottom: 3px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-    <div class="row">
-        <div class="col">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Goal</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Status</th>
-                            <th>Issues</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($sprints as $sprint): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($sprint['NAME']) ?></td>
-                            <td><?= htmlspecialchars($sprint['GOAL']) ?></td>
-                            <td><?= date('Y-m-d', $sprint['START_DATE']/1000) ?></td>
-                            <td><?= date('Y-m-d', $sprint['END_DATE']/1000) ?></td>
-                            <td>
-                                <?php if ($sprint['CLOSED']): ?>
-                                    <span class="badge badge-secondary">Closed</span>
-                                <?php elseif ($sprint['STARTED']): ?>
-                                    <span class="badge badge-success">Active</span>
-                                <?php else: ?>
-                                    <span class="badge badge-info">Future</span>
-                                <?php endif; ?>
-                            </td>
-                            <td><?= $sprint['issue_count'] ?></td>
-                            <td>
-                                <a href="index.php?page=sprints&action=board&id=<?= $sprint['ID'] ?>" class="btn btn-sm btn-info">
-                                    <i class="fas fa-columns"></i> Board
-                                </a>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    .breadcrumb {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breadcrumb-item {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: darkred;
+    }
+
+    .breadcrumb-item a {
+        color: darkred;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+        color: darkred;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: darkred;
+        content: "›";
+        font-size: 1.4rem;
+        line-height: 1;
+        padding: 0 0.5rem;
+    }
+</style>
+
+<div class="page-header">
+    <div class="d-flex align-items-center">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <i class="fas fa-project-diagram"></i>
+                    <a href="index.php">Projects</a>
+                </li>
+                <?php if (isset($project)): ?>
+                <li class="breadcrumb-item">
+                    <a href="index.php?page=projects&action=view&id=<?= $project['ID'] ?>">
+                        <?= htmlspecialchars($project['PNAME']) ?>
+                    </a>
+                </li>
+                <?php endif; ?>
+                <li class="breadcrumb-item active">Sprints</li>
+            </ol>
+        </nav>
+    </div>
+    <?php if (isset($project)): ?>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createSprintModal">
+            <i class="fas fa-plus"></i> Create Sprint
+        </button>
+    <?php endif; ?>
+</div>
+
+<div class="container-fluid">
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Goal</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
+                    <th>Issues</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($sprints as $sprint): ?>
+                <tr>
+                    <td><?= htmlspecialchars($sprint['NAME']) ?></td>
+                    <td><?= htmlspecialchars($sprint['GOAL']) ?></td>
+                    <td><?= date('Y-m-d', $sprint['START_DATE']/1000) ?></td>
+                    <td><?= date('Y-m-d', $sprint['END_DATE']/1000) ?></td>
+                    <td>
+                        <?php if ($sprint['CLOSED']): ?>
+                            <span class="badge badge-secondary">Closed</span>
+                        <?php elseif ($sprint['STARTED']): ?>
+                            <span class="badge badge-success">Active</span>
+                        <?php else: ?>
+                            <span class="badge badge-info">Future</span>
+                        <?php endif; ?>
+                    </td>
+                    <td><?= $sprint['issue_count'] ?></td>
+                    <td>
+                        <a href="index.php?page=sprints&action=board&id=<?= $sprint['ID'] ?>" class="btn btn-sm btn-info">
+                            <i class="fas fa-columns"></i> Board
+                        </a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 
