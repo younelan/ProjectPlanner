@@ -332,6 +332,7 @@ public function getProjectIssuesWithSubcomponents($projectId) {
     }
 
     public function getAllIssueTypes() {
+        // Note: We keep PNAME AS NAME to maintain compatibility with existing code
         $stmt = $this->db->prepare("
             SELECT 
                 ID,
@@ -537,14 +538,6 @@ public function getProjectIssuesWithSubcomponents($projectId) {
     }
 
     public function createIssue(array $data) {
-        // Ensure default values to avoid undefined array key warnings
-        $data['projectId']   = $data['projectId']   ?? null;
-        $data['summary']     = $data['summary']     ?? '';
-        $data['description'] = $data['description'] ?? '';
-        $data['issuetype']   = $data['issuetype']   ?? 'Task';
-        $data['priority']    = $data['priority']    ?? 'Medium';
-        $data['reporter']    = $data['reporter']    ?? '';
-        
         try {
             // Get next ID
             $stmt = $this->db->query("SELECT MAX(ID) FROM JIRAISSUE");
@@ -564,7 +557,10 @@ public function getProjectIssuesWithSubcomponents($projectId) {
                 ':projectId' => $data['projectId']
             ]);
 
-            // Insert new issue with default values
+            // Handle status - convert between API and form values
+            $status = $data['status'] ?? $data['STATUS_ID'] ?? 1; // Default to ID 1 if not specified
+
+            // Insert new issue
             $stmt = $this->db->prepare("
                 INSERT INTO JIRAISSUE (
                     ID, PROJECT, ISSUENUM, SUMMARY, DESCRIPTION, 
@@ -582,12 +578,12 @@ public function getProjectIssuesWithSubcomponents($projectId) {
                 ':projectId' => $data['projectId'],
                 ':issuenum' => $newCounter,
                 ':summary' => $data['summary'],
-                ':description' => $data['description'],
+                ':description' => $data['description'] ?? '',
                 ':issuetype' => $data['issuetype'],
                 ':priority' => $data['priority'],
                 ':reporter' => $data['reporter'],
                 ':assignee' => empty($data['assignee']) ? null : $data['assignee'],
-                ':status' => $data['status'] ?? 'Open'  // Use provided status or default to 'Open'
+                ':status' => $status
             ];
 
             $stmt->execute($params);

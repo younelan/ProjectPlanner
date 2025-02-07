@@ -187,7 +187,7 @@ select.form-control {
                             <select class="form-control" id="issuetype" name="issuetype" required>
                                 <?php foreach ($issueTypes as $type): ?>
                                     <option value="<?= htmlspecialchars($type['ID']) ?>">
-                                        <?= htmlspecialchars($type['PNAME']) ?>
+                                        <?= htmlspecialchars($type['NAME']) ?> <!-- Keep using NAME as it's aliased in the model -->
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -239,10 +239,11 @@ select.form-control {
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="reporter">Reporter</label>
-                            <select class="form-control" id="reporter" name="reporter" required>
+                            <select class="form-control" id="reporter" name="reporter">
                                 <?php foreach ($users as $user): ?>
-                                    <option value="<?= htmlspecialchars($user['LOWER_USER_NAME']) ?>">
-                                        <?= htmlspecialchars($user['LOWER_USER_NAME']) ?>
+                                    <option value="<?= htmlspecialchars($user['USERNAME']) ?>" 
+                                            <?= $user['USERNAME'] === User::getCurrentUser() ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($user['DISPLAY_NAME'] ?: $user['USERNAME']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>

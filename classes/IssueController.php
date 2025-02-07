@@ -40,7 +40,6 @@ class IssueController {
         $allProjects = $this->projectModel->getAllProjects();
         $workflowModel = new Workflow($this->db);
         $statuses = $workflowModel->getWorkflowSteps($project['ID']);
-        print_r($statuses,$allProjects,$allStatuses,$users);exit;
         $appName = $this->config['name'];
         include 'views/issues/view.php';
     }
@@ -626,6 +625,33 @@ class IssueController {
             
             $this->db->commit();
             echo json_encode(['success' => true, 'typeName' => $typeName]);
+            
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    public function bulkLink() {
+        header('Content-Type: application/json');
+        
+        try {
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!isset($data['ids']) || !isset($data['targetIssueId']) || !isset($data['linkType'])) {
+                echo json_encode(['success' => false, 'error' => 'Missing required fields']);
+                exit;
+            }
+
+            $this->db->beginTransaction();
+            
+            // For each selected issue, create a link
+            foreach ($data['ids'] as $sourceId) {
+                $this->issueModel->addIssueLink($sourceId, $data['targetIssueId'], $data['linkType']);
+            }
+            
+            $this->db->commit();
+            echo json_encode(['success' => true]);
             
         } catch (Exception $e) {
             $this->db->rollBack();

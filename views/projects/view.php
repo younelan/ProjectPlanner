@@ -127,6 +127,7 @@ include 'views/templates/header.php';
                                 <option value="status">Change Status...</option>
                                 <option value="type">Change Type...</option>
                                 <option value="move">Move to Project...</option>
+                                <option value="bulkLink">Link Issues...</option>
                                 <option value="delete">Delete</option>
                             </select>
                         </div>
@@ -138,6 +139,14 @@ include 'views/templates/header.php';
                         <div class="col-auto">
                             <button class="btn btn-primary" id="applyBulkAction">Apply</button>
                         </div>
+                    </div>
+                </div>
+                <div id="bulkLinkIssue" class="col-auto" style="display: none;">
+                    <div class="autocomplete-wrapper position-relative">
+                        <input type="text" class="form-control" id="linkIssueAutocomplete" 
+                               placeholder="Search for an issue to link">
+                        <input type="hidden" id="selectedIssueId">
+                        <div id="autocompleteResults" class="position-absolute w-100 bg-white shadow-sm" style="display: none; z-index: 1000;"></div>
                     </div>
                 </div>
             </div>
@@ -378,6 +387,28 @@ a.text-dark:hover {
     background-color: #0052cc;
     border-color: #0052cc;
 }
+
+/* Add these styles for autocomplete */
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.autocomplete-result {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.autocomplete-result:hover {
+    background-color: #f8f9fa;
+}
+
+#autocompleteResults {
+    border: 1px solid #ddd;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+}
 </style>
 
 <script>
@@ -563,8 +594,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 const issueTypes = <?= json_encode($issueTypes ?? []) ?>;
                 bulkActionValue.innerHTML = '<option value="">-- Select Type --</option>';
                 issueTypes.forEach(type => {
-                    bulkActionValue.innerHTML += `<option value="${type.ID}">${type.NAME}</option>`;
+                    bulkActionValue.innerHTML += `<option value="${type.ID}">${type.PNAME}</option>`; // Changed from NAME to PNAME
                 });
+                break;
+                
+            case 'bulkLink':
+                secondarySelect.style.display = 'block';
+                bulkActionValue.innerHTML = '<option value="">-- Select Link Type --</option>';
+                const linkTypes = <?= json_encode($linkTypes ?? []) ?>;
+                linkTypes.forEach(type => {
+                    bulkActionValue.innerHTML += `<option value="${type.ID}">${type.LINKNAME}</option>`;
+                });
+                // Show autocomplete field
+                document.getElementById('bulkLinkIssue').style.display = 'block';
                 break;
                 
             case 'delete':
@@ -573,8 +615,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             default:
                 secondarySelect.style.display = 'none';
+                document.getElementById('bulkLinkIssue').style.display = 'none';
         }
     }
+
+    // Add new section after secondary-select div
+    const bulkActionsDiv = document.querySelector('.secondary-select');
+    const autocompleteDiv = document.createElement('div');
+    autocompleteDiv.id = 'bulkLinkIssue';
+    autocompleteDiv.className = 'col-auto';
+    autocompleteDiv.style.display = 'none';
+    autocompleteDiv.innerHTML = `
+        <input type="text" class="form-control" id="linkIssueAutocomplete" 
+               placeholder="Search for an issue to link">
+        <input type="hidden" id="selectedIssueId">
+    `;
+    bulkActionsDiv.after(autocompleteDiv);
+
+    // Initialize autocomplete
+    $(document).ready(function() {
+        $("#linkIssueAutocomplete").autocomplete({
+            source: function(request, response) {
+                $.get('index.php', {
+                    page: 'issues',
+                    action: 'autocompleteIssues',
+                    term: request.term,
+                    projectId: <?= $project['ID'] ?>
+                }, function(data) {
+                    response(data.map(item => ({
+                        label: item.LABEL,
+                        value: item.ID
+                    })));
+                });
+            },
+            minLength: 2,
+            select: function(event, ui) {
+                event.preventDefault();
+                $('#linkIssueAutocomplete').val(ui.item.label);
+                $('#selectedIssueId').val(ui.item.value);
+            }
+        });
+    });
 
     function applyBulkAction() {
         const action = document.getElementById('bulkAction').value;
@@ -594,15 +675,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const endpoint = 'index.php?page=issues&action=' + action;
+        let data = {
+            ids: issueIds,
+            value: value
+        };
+        
+        if (action === 'bulkLink') {
+            const targetIssueId = document.getElementById('selectedIssueId').value;
+            if (!targetIssueId) {
+                alert('Please select an issue to link to');
+                return;
+            }
+            data = {
+                ids: issueIds,
+                targetIssueId: targetIssueId,
+                linkType: value
+            };
+        }
+        
         fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                ids: issueIds,
-                value: value
-            })
+            body: JSON.stringify(data)
         })
         .then(response => response.json())
         .then(data => {
@@ -922,6 +1018,53 @@ document.addEventListener('DOMContentLoaded', function() {
     if (bulkAction.value) {
         handleBulkActionChange();
     }
+
+    // Replace jQuery UI autocomplete with native JavaScript
+    const autocompleteInput = document.getElementById('linkIssueAutocomplete');
+    const autocompleteResults = document.getElementById('autocompleteResults');
+    const selectedIssueInput = document.getElementById('selectedIssueId');
+    let debounceTimer;
+
+    autocompleteInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const searchTerm = this.value;
+            if (searchTerm.length < 2) {
+                autocompleteResults.style.display = 'none';
+                return;
+            }
+
+            fetch(`index.php?page=issues&action=autocompleteIssues&term=${encodeURIComponent(searchTerm)}&projectId=<?= $project['ID'] ?>`)
+                .then(response => response.json())
+                .then(data => {
+                    autocompleteResults.innerHTML = data.map(item => `
+                        <div class="autocomplete-result" 
+                             data-id="${item.ID}" 
+                             data-label="${item.LABEL}">
+                            ${item.LABEL}
+                        </div>
+                    `).join('');
+                    autocompleteResults.style.display = 'block';
+                });
+        }, 300);
+    });
+
+    // Handle click on autocomplete result
+    autocompleteResults.addEventListener('click', function(e) {
+        const result = e.target.closest('.autocomplete-result');
+        if (result) {
+            autocompleteInput.value = result.dataset.label;
+            selectedIssueInput.value = result.dataset.id;
+            autocompleteResults.style.display = 'none';
+        }
+    });
+
+    // Hide results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.autocomplete-wrapper')) {
+            autocompleteResults.style.display = 'none';
+        }
+    });
 });
 </script>
 

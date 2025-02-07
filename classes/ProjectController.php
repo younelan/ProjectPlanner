@@ -50,6 +50,9 @@ class ProjectController {
         $users = $userModel->getAllUsers();
         $allProjects = $this->projectModel->getAllProjects();
         
+        // Get link types for issue linking
+        $linkTypes = $this->issueModel->getAllLinkTypes();
+        
         // Get workflow statuses properly
         $workflowModel = new Workflow($this->db);
         $statuses = $workflowModel->getWorkflowSteps($id);
@@ -211,7 +214,7 @@ class ProjectController {
             exit;
         } catch (Exception $e) {
             // On failure, show form again with error
-            $projects = $this->projectModel->getAllProjects();
+            $projects = $this->projectModel->getAllProjects(); // Fixed syntax error here
             $userModel = new User($this->db);
             $users = $userModel->getAllUsers();
             $error = $e->getMessage();

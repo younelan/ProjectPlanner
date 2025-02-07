@@ -122,13 +122,15 @@ try {
             case 'assign':
             case 'status':
             case 'move':
-            case 'type':  // Add type case
+            case 'type':
+            case 'bulkLink':  // Add new case
                 header('Content-Type: application/json');
                 $result = match($action) {
                     'assign' => $controller->assign(),
                     'status' => $controller->status(),
                     'move' => $controller->move(),
-                    'type' => $controller->type(),  // Add type handler
+                    'type' => $controller->type(),
+                    'bulkLink' => $controller->bulkLink(),  // Add new action
                 };
                 echo json_encode($result);
                 exit;
