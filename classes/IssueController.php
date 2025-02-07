@@ -13,6 +13,10 @@ class IssueController {
     }
 
     public function view($id) {
+        if (!$id) {
+            throw new Exception("ID required");
+        }
+
         $issue = $this->issueModel->getIssueById($id);
         if (!$issue) {
             throw new Exception("Issue not found");
@@ -29,6 +33,14 @@ class IssueController {
         $history = $this->issueModel->getIssueHistory($id);
         $linkTypes = $this->issueModel->getAllLinkTypes();
         
+        // Get data needed for bulk actions (in case we need them in the view)
+        $userModel = new User($this->db);
+        $users = $userModel->getAllUsers();
+        $allStatuses = $this->issueModel->getAllStatuses();
+        $allProjects = $this->projectModel->getAllProjects();
+        $workflowModel = new Workflow($this->db);
+        $statuses = $workflowModel->getWorkflowSteps($project['ID']);
+        print_r($statuses,$allProjects,$allStatuses,$users);exit;
         $appName = $this->config['name'];
         include 'views/issues/view.php';
     }
@@ -483,6 +495,86 @@ class IssueController {
             echo json_encode(['success' => true]);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function assign() {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!isset($data['ids']) || !isset($data['value'])) {
+            return ['success' => false, 'error' => 'Missing required fields'];
+        }
+
+        try {
+            $this->db->beginTransaction();
+            $stmt = $this->db->prepare("UPDATE JIRAISSUE SET ASSIGNEE = ? WHERE ID = ?");
+            foreach ($data['ids'] as $id) {
+                $stmt->execute([$data['value'], $id]);
+            }
+            $this->db->commit();
+            return ['success' => true];
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    public function status() {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!isset($data['ids']) || !isset($data['value'])) {
+            return ['success' => false, 'error' => 'Missing required fields'];
+        }
+
+        try {
+            $this->db->beginTransaction();
+            $stmt = $this->db->prepare("UPDATE JIRAISSUE SET ISSUESTATUS = ? WHERE ID = ?");
+            foreach ($data['ids'] as $id) {
+                $stmt->execute([$data['value'], $id]);
+            }
+            $this->db->commit();
+            return ['success' => true];
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    // Add new method for moving issues
+    public function move() {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!isset($data['ids']) || !isset($data['value'])) {
+            return ['success' => false, 'error' => 'Missing required fields'];
+        }
+
+        try {
+            $this->db->beginTransaction();
+            
+            // Get the target project's next issue number
+            $stmt = $this->db->prepare("SELECT PCOUNTER FROM PROJECT WHERE ID = ?");
+            $stmt->execute([$data['value']]);
+            $counter = $stmt->fetchColumn();
+            
+            foreach ($data['ids'] as $id) {
+                $counter++;
+                // Update the issue with new project ID and issue number
+                $stmt = $this->db->prepare("
+                    UPDATE JIRAISSUE 
+                    SET PROJECT = ?, 
+                        ISSUENUM = ?,
+                        UPDATED = CURRENT_TIMESTAMP 
+                    WHERE ID = ?
+                ");
+                $stmt->execute([$data['value'], $counter, $id]);
+            }
+            
+            // Update the project's counter
+            $stmt = $this->db->prepare("UPDATE PROJECT SET PCOUNTER = ? WHERE ID = ?");
+            $stmt->execute([$counter, $data['value']]);
+            
+            $this->db->commit();
+            return ['success' => true];
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            return ['success' => false, 'error' => $e->getMessage()];
         }
     }
 }

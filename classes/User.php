@@ -25,7 +25,7 @@ class User {
         $query = "
             SELECT 
                 u.USER_KEY,
-                COALESCE(cu.display_name, u.USER_KEY) as display_name,
+                COALESCE(cu.DISPLAY_NAME, u.USER_KEY) as DISPLAY_NAME,
                 cu.email_address,
                 cu.active
             FROM APP_USER u
@@ -47,7 +47,7 @@ class User {
         $query = "
             SELECT 
                 u.USER_KEY,
-                COALESCE(cu.display_name, u.USER_KEY) as display_name,
+                COALESCE(cu.DISPLAY_NAME, u.USER_KEY) as DISPLAY_NAME,
                 cu.email_address,
                 cu.active
             FROM USER u

@@ -119,6 +119,18 @@ try {
                 header('Content-Type: application/json');
                 $controller->updateStatus();
                 break;
+            case 'assign':
+            case 'status':
+            case 'move':
+                header('Content-Type: application/json');
+                $result = match($action) {
+                    'assign' => $controller->assign(),
+                    'status' => $controller->status(),
+                    'move' => $controller->move(),
+                };
+                echo json_encode($result);
+                exit;
+                break;
             default:
                 throw new Exception("Invalid action: $action");
         }

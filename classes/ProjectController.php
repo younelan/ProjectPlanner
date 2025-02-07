@@ -41,23 +41,31 @@ class ProjectController {
         $project = $this->projectModel->getProjectById($id);
         if (!$project) {
             throw new Exception("Project not found");
-        }  // Added missing closing brace
-        
-        if (empty($project['PKEY'])) {
-            throw new Exception("Invalid project configuration: missing PKEY");
         }
         
-        $issues = $this->issueModel->getIssuesByProject($project['ID']);
-        $issuesWithLinks = $this->getIssueLinks($issues);
+        $issues = $this->issueModel->getIssuesForBoard($id);
+
+        // Get data needed for bulk actions
+        $userModel = new User($this->db);
+        $users = $userModel->getAllUsers();
+        $allProjects = $this->projectModel->getAllProjects();
         
+        // Get workflow statuses properly
+        $workflowModel = new Workflow($this->db);
+        $statuses = $workflowModel->getWorkflowSteps($id);
+        
+        // Ensure we have proper status data for the project
+        if (empty($statuses)) {
+            // Fallback to default statuses if no workflow is defined
+            $statuses = [
+                ['ID' => 1, 'PNAME' => 'Open'],
+                ['ID' => 2, 'PNAME' => 'In Progress'],
+                ['ID' => 3, 'PNAME' => 'Resolved'],
+                ['ID' => 4, 'PNAME' => 'Closed']
+            ];
+        }
+
         $appName = $this->config['name'];
-        $viewData = [
-            'appName' => $appName,
-            'project' => $project,
-            'issues' => $issues,
-            'issuesWithLinks' => $issuesWithLinks
-        ];
-        extract($viewData);
         include 'views/projects/view.php';
     }
 
@@ -254,7 +262,7 @@ class ProjectController {
     private function getProjectDetails($projectId) {
         // Example SQL to fetch project details
         $query = "SELECT * FROM PROJECT WHERE ID = :projectId";
-        $stmt = $this->pdo->prepare($query);
+        $stmt = $this->db->prepare($query);
         $stmt->execute([':projectId' => $projectId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -277,7 +285,7 @@ class ProjectController {
                 JOIN ISSUELINKTYPE AS ILT ON IL.LINKTYPE = ILT.ID
                 WHERE IL.SOURCE = :issueId OR IL.DESTINATION = :issueId
             ";
-            $stmt = $this->pdo->prepare($query);
+            $stmt = $this->db->prepare($query);
             $stmt->execute([':issueId' => $issue['ID']]);
             $links = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $issueLinks[$issue['ID']] = $links;

@@ -138,7 +138,7 @@ include 'views/templates/header.php';
                     <option value="">Unassigned</option>
                     <?php foreach ($users as $user): ?>
                         <option value="<?= htmlspecialchars($user['USER_KEY']) ?>">
-                            <?= htmlspecialchars($user['display_name']) ?>
+                            <?= htmlspecialchars($user['DISPLAY_NAME']) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

@@ -41,7 +41,7 @@ class Sprint {
                     ji.*,
                     p.PKEY as ProjectKey,
                     CONCAT(p.PKEY, '-', ji.ISSUENUM) as IssueKey,
-                    cu.display_name as ASSIGNEE,
+                    cu.DISPLAY_NAME as ASSIGNEE,
                     t.pname as ISSUETYPE,  /* Changed TYPE to ISSUETYPE to match database */
                     ist.pname as STATUS 
                 FROM 

@@ -96,6 +96,9 @@ include 'views/templates/header.php';
                     <table class="table table-hover">
                         <thead>
                             <tr>
+                                <th>
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
                                 <th class="sortable" data-sort="id">ID <i class="fas fa-sort"></i></th>
                                 <th class="sortable" data-sort="summary">Summary <i class="fas fa-sort"></i></th>
                                 <th class="sortable" data-sort="type">Type <i class="fas fa-sort"></i></th>
@@ -109,6 +112,32 @@ include 'views/templates/header.php';
                             <!-- Issues will be dynamically populated here -->
                         </tbody>
                     </table>
+                </div>
+                
+                <!-- Bulk Actions -->
+                <div class="bulk-actions mt-3" style="display: none;">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="selected-count">0 items selected</span>
+                        </div>
+                        <div class="col-auto">
+                            <select class="form-select" id="bulkAction">
+                                <option value="">Bulk Actions...</option>
+                                <option value="assign">Assign To...</option>
+                                <option value="status">Change Status...</option>
+                                <option value="move">Move to Project...</option>
+                                <option value="delete">Delete</option>
+                            </select>
+                        </div>
+                        <div class="col-auto secondary-select" style="display: none;">
+                            <select class="form-select" id="bulkActionValue">
+                                <!-- Will be populated based on selected action -->
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary" id="applyBulkAction">Apply</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -353,6 +382,8 @@ a.text-dark:hover {
 <script>
 // Define global variables and functions
 window.issues = <?= json_encode($issues) ?>;
+let selectedIssues = new Set(); // Initialize selectedIssues at the top level
+
 window.filterIssues = null; // Will be assigned in DOMContentLoaded
 window.handleDelete = function(issueId, issueKey) {
     if (confirm(`Are you sure you want to delete issue ${issueKey}? This action cannot be undone.`)) {
@@ -415,6 +446,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderIssues(filteredIssues) {
         tbody.innerHTML = filteredIssues.map(issue => `
             <tr data-issue-id="${issue.ID}">
+                <td style="width: 40px">
+                    <input type="checkbox" 
+                           class="form-check-input issue-checkbox" 
+                           value="${issue.ID}" 
+                           ${selectedIssues.has(parseInt(issue.ID)) ? 'checked' : ''}>
+                </td>
                 <td data-label="ID" data-value="${issue.ID}">
                     <span class="badge badge-secondary">
                         ${project.PKEY}-${issue.ID}
@@ -461,78 +498,138 @@ document.addEventListener('DOMContentLoaded', function() {
             </tr>
         `).join('');
         
-        // Reattach delete handlers after rendering
-        //attachDeleteHandlers();
+        updateBulkActionVisibility();
     }
 
-    // function attachDeleteHandlers() {
-    //     document.querySelectorAll('.delete-issue').forEach(button => {
-    //         button.addEventListener('click', function(e) {
-    //             e.preventDefault();
-    //             const issueId = this.dataset.issueId;
-    //             // if (confirm('Are you sure you want to delete this issue?')) {
-    //             //     fetch(`index.php?page=issues&action=delete&id=${issueId}`, {
-    //             //         method: 'POST'
-    //             //     })
-    //             //     .then(response => response.json())
-    //             //     .then(data => {
-    //             //         if (data.success) {
-    //             //             this.closest('tr').remove();
-    //             //         } else {
-    //             //             alert(data.error || 'Failed to delete issue');
-    //             //         }
-    //             //     })
-    //             //     .catch(error => {
-    //             //         console.error('Error:', error);
-    //             //         alert('Failed to delete issue');
-    //             //     });
-    //             // }
-    //         });
-    //     });
-    //}
-
-    function filterIssues() {
-        const searchTerm = filterInput.value.toLowerCase();
-        const filtered = issues.filter(issue => 
-            (selectedTypes.has(issue.TYPE)) && // Add type filter condition
-            (
-                issue.SUMMARY.toLowerCase().includes(searchTerm) ||
-                issue.TYPE.toLowerCase().includes(searchTerm) ||
-                (issue.ASSIGNEE && issue.ASSIGNEE.toLowerCase().includes(searchTerm)) ||
-                issue.STATUS.toLowerCase().includes(searchTerm) ||
-                (issue.PRIORITY && issue.PRIORITY.toLowerCase().includes(searchTerm))
-            )
-        );
-        
-        if (currentSort.column) {
-            sortIssues(filtered, currentSort.column, currentSort.direction);
+    function updateBulkActionVisibility() {
+        const bulkActionsDiv = document.querySelector('.bulk-actions');
+        const selectedCount = document.querySelector('.selected-count');
+        if (selectedIssues.size > 0) {
+            bulkActionsDiv.style.display = 'block';
+            selectedCount.textContent = `${selectedIssues.size} items selected`;
+        } else {
+            bulkActionsDiv.style.display = 'none';
         }
-        renderIssues(filtered);
     }
 
-    function sortIssues(issueList, column, direction) {
-        issueList.sort((a, b) => {
-            let aVal = String(a[column] || '');
-            let bVal = String(b[column] || '');
-            
-            // Special handling for status and priority
-            if (column === 'STATUS') {
-                aVal = parseInt(a['STATUS_ORDER'] || '0');
-                bVal = parseInt(b['STATUS_ORDER'] || '0');
-                return direction === 'asc' ? aVal - bVal : bVal - aVal;
-            }
+    function handleBulkActionChange() {
+        const bulkAction = document.getElementById('bulkAction');
+        const secondarySelect = document.querySelector('.secondary-select');
+        const bulkActionValue = document.getElementById('bulkActionValue');
+        
+        bulkActionValue.innerHTML = ''; // Clear existing options
+        
+        switch (bulkAction.value) {
+            case 'assign':
+                secondarySelect.style.display = 'block';
+                // Add user options
+                const users = <?= json_encode($users ?? []) ?>;
+                bulkActionValue.add(new Option('-- Select User --', ''));
+                users.forEach(user => {
+                    // Use correct property names from User model
+                    bulkActionValue.add(new Option(user.DISPLAY_NAME || user.USERNAME, user.USERNAME));
+                });
+                break;
+                
+            case 'status':
+                secondarySelect.style.display = 'block';
+                // Add status options
+                const statuses = <?= json_encode($statuses ?? []) ?>;
+                bulkActionValue.innerHTML = '<option value="">-- Select Status --</option>';
+                // Use Object.values() to handle object iteration
+                Object.values(statuses).forEach(status => {
+                    bulkActionValue.innerHTML += `<option value="${status.ID}">${status.PNAME}</option>`;
+                });
+                break;
 
-            // Numeric comparison for ID
-            if (column === 'ID') {
-                return direction === 'asc' 
-                    ? parseInt(aVal) - parseInt(bVal)
-                    : parseInt(bVal) - parseInt(aVal);
-            }
+            case 'move':
+                secondarySelect.style.display = 'block';
+                // Add project options from allProjects
+                const projects = <?= json_encode($allProjects ?? []) ?>;
+                bulkActionValue.add(new Option('-- Select Project --', ''));
+                if (projects) {
+                    projects.forEach(proj => {
+                        if (proj.ID !== <?= $project['ID'] ?>) { // Exclude current project
+                            bulkActionValue.add(new Option(proj.PNAME, proj.ID));
+                        }
+                    });
+                }
+                break;
+                
+            case 'delete':
+                secondarySelect.style.display = 'none';
+                break;
+                
+            default:
+                secondarySelect.style.display = 'none';
+        }
+    }
 
-            // Default string comparison
-            return direction === 'asc' 
-                ? aVal.toLowerCase().localeCompare(bVal.toLowerCase())
-                : bVal.toLowerCase().localeCompare(aVal.toLowerCase());
+    function applyBulkAction() {
+        const action = document.getElementById('bulkAction').value;
+        const value = document.getElementById('bulkActionValue').value;
+        const issueIds = Array.from(selectedIssues);
+        
+        if (!action || !issueIds.length) return;
+        if (!value && action !== 'delete') {
+            alert('Please select a value');
+            return;
+        }
+        
+        if (action === 'delete') {
+            if (!confirm(`Are you sure you want to delete ${issueIds.length} issues? This cannot be undone.`)) {
+                return;
+            }
+        }
+        
+        const endpoint = 'index.php?page=issues&action=' + action;
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ids: issueIds,
+                value: value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (action === 'delete' || action === 'move') {
+                    // Remove affected issues from the list
+                    window.issues = window.issues.filter(issue => !selectedIssues.has(issue.ID));
+                } else if (action === 'assign') {
+                    // Update assignee in the list
+                    window.issues.forEach(issue => {
+                        if (selectedIssues.has(issue.ID)) {
+                            issue.ASSIGNEE = value;
+                        }
+                    });
+                } else if (action === 'status') {
+                    // Update status in the list
+                    const statusName = document.getElementById('bulkActionValue').options[
+                        document.getElementById('bulkActionValue').selectedIndex
+                    ].text;
+                    window.issues.forEach(issue => {
+                        if (selectedIssues.has(issue.ID)) {
+                            issue.STATUS = statusName;
+                            issue.STATUS_ID = value;
+                        }
+                    });
+                }
+                // Clear selection and refresh display
+                selectedIssues.clear();
+                document.getElementById('selectAll').checked = false;
+                filterIssues();
+                alert('Operation completed successfully');
+            } else {
+                throw new Error(data.error || 'Operation failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to perform bulk action: ' + error.message);
         });
     }
 
@@ -697,7 +794,36 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial render with filtered issues
     filterIssues(); // Add this line to apply filters on load
 
-    // ...rest of existing code...
+    // Add new event listeners
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.issue-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+            if (this.checked) {
+                selectedIssues.add(parseInt(checkbox.value));
+            } else {
+                selectedIssues.delete(parseInt(checkbox.value));
+            }
+        });
+        updateBulkActionVisibility();
+    });
+    
+    document.getElementById('issueTableBody').addEventListener('change', function(e) {
+        if (e.target.classList.contains('issue-checkbox')) {
+            const issueId = parseInt(e.target.value);
+            if (e.target.checked) {
+                selectedIssues.add(issueId);
+            } else {
+                selectedIssues.delete(issueId);
+                // Uncheck "Select All" if any individual checkbox is unchecked
+                document.getElementById('selectAll').checked = false;
+            }
+            updateBulkActionVisibility();
+        }
+    });
+    
+    document.getElementById('bulkAction').addEventListener('change', handleBulkActionChange);
+    document.getElementById('applyBulkAction').addEventListener('click', applyBulkAction);
 });
 </script>
 
