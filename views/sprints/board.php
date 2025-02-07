@@ -3,6 +3,87 @@ $pageTitle = "Sprint Board";
 include 'views/templates/header.php'; 
 ?>
 
+<style>
+    .page-header {
+        background: linear-gradient(135deg, rgb(224 228 202) 0%, rgb(236, 215, 190) 100%);
+        padding: 1rem 1.5rem;
+        margin: 0;
+        margin-bottom: 3px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .breadcrumb {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breadcrumb-item {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: darkred;
+    }
+
+    .breadcrumb-item a {
+        color: darkred;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+        color: darkred;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: darkred;
+        content: "›";
+        font-size: 1.4rem;
+        line-height: 1;
+        padding: 0 0.5rem;
+    }
+</style>
+
+<div class="page-header">
+    <div class="d-flex align-items-center">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <i class="fas fa-project-diagram"></i>
+                    <a href="index.php">Projects</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="index.php?page=projects&action=view&id=<?= $sprint['PROJECT_ID'] ?>">
+                        <?= htmlspecialchars($projectName) ?>
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="index.php?page=sprints&action=list&projectId=<?= $sprint['PROJECT_ID'] ?>">Sprints</a>
+                </li>
+                <li class="breadcrumb-item active"><?= htmlspecialchars($sprint['NAME']) ?></li>
+            </ol>
+        </nav>
+    </div>
+    <div class="btn-group">
+        <button type="button" id="viewToggle" class="btn btn-outline-primary simple-dropdown-toggle" onclick="toggleSimpleDropdown(this)">
+            <i class="fas fa-eye"></i> View As
+        </button>
+        <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
+            <a class="dropdown-item" href="#" onclick="selectView('flow'); return false;">Flow</a>
+            <a class="dropdown-item" href="#" onclick="selectView('tabbed'); return false;">Tabbed View</a>
+        </div>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createIssueModal">
+            <i class="fas fa-plus"></i> Create Issue
+        </button>
+        <a href="index.php?page=sprints&action=list&projectId=<?= $sprint['PROJECT_ID'] ?>" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Sprints
+        </a>
+    </div>
+</div>
+
 <!-- Add dependencies -->
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
@@ -205,29 +286,6 @@ include 'views/templates/header.php';
 </style>
 
 <div id="boardContainer">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 id="projectName">
-            <a href="index.php?page=projects&action=view&id=<?= $sprint['PROJECT_ID'] ?>" class="text-dark">
-                <?= htmlspecialchars($projectName) ?>
-            </a> - 
-            <?= htmlspecialchars($sprint['NAME']) ?>
-        </h2>
-        <div>
-            <button type="button" class="btn btn-primary mr-2" data-toggle="modal" data-target="#createIssueModal">
-                <i class="fas fa-plus"></i> Create Issue
-            </button>
-            <div class="btn-group">
-                <div class="dropdown-menu simple-dropdown-menu" style="display: none;">
-                    <a class="dropdown-item" href="#" data-view="flow" onclick="selectView('flow'); return false;">Flow</a>
-                    <a class="dropdown-item" href="#" data-view="tabbed" onclick="selectView('tabbed'); return false;">Tabbed View</a>
-                </div>
-            </div>
-            <a href="index.php?page=sprints&action=list&projectId=<?= $sprint['PROJECT_ID'] ?>" class="btn btn-outline-secondary ml-2">
-                <i class="fas fa-arrow-left"></i> Back to Sprints
-            </a>
-        </div>
-    </div>
-
     <div id="board"></div>
 </div>
 
