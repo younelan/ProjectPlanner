@@ -601,28 +601,71 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.issues = window.issues.filter(issue => !selectedIssues.has(issue.ID));
                 } else if (action === 'assign') {
                     // Update assignee in the list
-                    window.issues.forEach(issue => {
+                    window.issues = window.issues.map(issue => {
                         if (selectedIssues.has(issue.ID)) {
-                            issue.ASSIGNEE = value;
+                            return { ...issue, ASSIGNEE: value };
                         }
+                        return issue;
                     });
                 } else if (action === 'status') {
-                    // Update status in the list
                     const statusName = document.getElementById('bulkActionValue').options[
                         document.getElementById('bulkActionValue').selectedIndex
                     ].text;
-                    window.issues.forEach(issue => {
+                    
+                    // Add new status to filters if it doesn't exist
+                    const newStatusOption = document.getElementById('status-' + statusName);
+                    if (!newStatusOption) {
+                        const statusFilterContainer = document.getElementById('issueStatusFilters');
+                        const div = document.createElement('div');
+                        div.className = 'form-check';
+                        div.innerHTML = `
+                            <input class="form-check-input issue-status-filter" type="checkbox" 
+                                   id="status-${statusName}" value="${statusName}" checked>
+                            <label class="form-check-label" for="status-${statusName}">
+                                <span class="badge badge-${getStatusBadgeClass(statusName)}">${statusName}</span>
+                            </label>
+                        `;
+                        statusFilterContainer.appendChild(div);
+                        
+                        // Add event listener to new checkbox
+                        const newCheckbox = div.querySelector('input');
+                        newCheckbox.addEventListener('change', function() {
+                            if (this.checked) {
+                                selectedStatuses.add(this.value);
+                            } else {
+                                selectedStatuses.delete(this.value);
+                            }
+                            localStorage.setItem(statusStorageKey, JSON.stringify([...selectedStatuses]));
+                            filterIssues();
+                        });
+                    }
+                    
+                    // Always add the new status to selectedStatuses
+                    selectedStatuses.add(statusName);
+                    localStorage.setItem(statusStorageKey, JSON.stringify([...selectedStatuses]));
+                    
+                    // Update all matching issues in the array
+                    window.issues = window.issues.map(issue => {
                         if (selectedIssues.has(issue.ID)) {
-                            issue.STATUS = statusName;
-                            issue.STATUS_ID = value;
+                            return { ...issue, STATUS: statusName, STATUS_ID: value };
                         }
+                        return issue;
                     });
                 }
+                
                 // Clear selection and refresh display
                 selectedIssues.clear();
                 document.getElementById('selectAll').checked = false;
+                
+                // Check the new status filter checkbox if it exists
+                if (action === 'status') {
+                    const statusCheckbox = document.getElementById('status-' + statusName);
+                    if (statusCheckbox) {
+                        statusCheckbox.checked = true;
+                    }
+                }
+                
                 filterIssues();
-                alert('Operation completed successfully');
             } else {
                 throw new Error(data.error || 'Operation failed');
             }
@@ -824,6 +867,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('bulkAction').addEventListener('change', handleBulkActionChange);
     document.getElementById('applyBulkAction').addEventListener('click', applyBulkAction);
+    
+    // Trigger bulk action change if there's a default value
+    const bulkAction = document.getElementById('bulkAction');
+    if (bulkAction.value) {
+        handleBulkActionChange();
+    }
 });
 </script>
 
