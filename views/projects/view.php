@@ -3,31 +3,88 @@ $pageTitle = htmlspecialchars($project['PNAME']) . ' | ' . $appName;
 include 'views/templates/header.php'; 
 ?>
 
-<div class="row">
-    <div class="col-md-12">
+<style>
+    .page-header {
+        background: linear-gradient(135deg, rgb(224 228 202) 0%, rgb(236, 215, 190) 100%);
+        padding: 1rem 1.5rem;
+        margin: 0;
+        margin-bottom: 3px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-title {
+        color: darkred;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breadcrumb {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breadcrumb-item {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: darkred;
+    }
+
+    .breadcrumb-item a {
+        color: darkred;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+        color: darkred;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: darkred;
+        content: "›";
+        font-size: 1.4rem;
+        line-height: 1;
+        padding: 0 0.5rem;
+    }
+</style>
+
+<div class="page-header">
+    <div class="d-flex align-items-center">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="index.php">Projects</a></li>
-                <li class="breadcrumb-item active"><?= htmlspecialchars($project['PNAME']) ?></li>
+                <li class="breadcrumb-item">
+                    <i class="fas fa-project-diagram"></i>
+                    <a href="index.php">Projects</a>
+                </li>
+                <li class="breadcrumb-item active">
+                    <?= htmlspecialchars($project['PNAME']) ?>
+                    <small class="text-muted"> &nbsp;(<?= htmlspecialchars($project['PKEY']) ?>)</small>
+                </li>
             </ol>
         </nav>
+    </div>
+    <div class="btn-group">
+        <a href="index.php?page=projects&action=board&id=<?= $project['ID'] ?>" class="btn btn-outline-primary">
+            <i class="fas fa-columns"></i> Board View
+        </a>
+        <a href="index.php?page=issues&action=new&projectId=<?= $project['ID'] ?>" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Issue
+        </a>
+    </div>
+</div>
 
+<div class="row">
+    <div class="col-md-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h2 class="mb-0">
-                    <i class="fas fa-tasks"></i> 
-                    <?= htmlspecialchars($project['PNAME']) ?> 
-                    <small class="text-muted">(<?= htmlspecialchars($project['PKEY']) ?>)</small>
-                </h2>
-                <div class="btn-group">
-                    <a href="index.php?page=projects&action=board&id=<?= $project['ID'] ?>" class="btn btn-outline-primary">
-                        <i class="fas fa-columns"></i> Board View
-                    </a>
-                    <a href="index.php?page=issues&action=new&projectId=<?= $project['ID'] ?>" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Create Issue
-                    </a>
-                </div>
-            </div>
             <div class="card-body">
                 <div class="mb-3">
                     <input type="text" id="issueFilter" class="form-control" placeholder="Type to filter issues...">
