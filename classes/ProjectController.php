@@ -67,24 +67,28 @@ class ProjectController {
             throw new Exception("Project not found");
         }
 
+        // Get workflow steps and users for both API and page load
+        $workflowModel = new Workflow($this->db);
+        $workflowSteps = $workflowModel->getWorkflowSteps($project['ID']);
+        
+        $userModel = new User($this->db);
+        $users = $userModel->getAllUsers();
+
+        $issues = $this->issueModel->getIssuesForBoard($id);
+
         if (isset($_GET['api'])) {
             // API endpoint for board data
-            $workflowModel = new Workflow($this->db);
-            $workflowSteps = $workflowModel->getWorkflowSteps($project['ID']);
-            $issues = $this->issueModel->getIssuesForBoard($id);
-            
             echo json_encode([
                 'workflow' => $workflowSteps,
                 'issues' => $issues,
-                'project' => $project
+                'project' => $project,
+                'users' => $users  // Add users to API response
             ]);
             exit;
         }
 
-        // For initial page load, get workflow steps for the template
-        $workflowModel = new Workflow($this->db);
-        $workflowSteps = $workflowModel->getWorkflowSteps($project['ID']);
-        
+        // For initial page load, pass data to template
+        $workflow = $workflowSteps; // Make workflow available to the view
         $appName = $this->config['name'];
         include 'views/projects/board.php';
     }

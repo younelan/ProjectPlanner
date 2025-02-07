@@ -2,7 +2,6 @@
 $pageTitle = "Board View";
 include 'views/templates/header.php'; 
 ?>
-
 <style>
     .page-header {
         background: linear-gradient(135deg, rgb(224 228 202) 0%, rgb(236, 215, 190) 100%);
@@ -121,6 +120,29 @@ include 'views/templates/header.php';
                 <label for="newTaskDescription">Description (optional)</label>
                 <textarea id="newTaskDescription" class="form-control" name="DESCRIPTION"></textarea>
             </div>
+            <!-- New field: Status -->
+            <div class="form-group">
+                <label for="newTaskStatus">Status</label>
+                <select id="newTaskStatus" class="form-control" name="STATUS_ID">
+                    <?php foreach ($workflow as $status): ?>
+                        <option value="<?= htmlspecialchars($status['ID']) ?>">
+                            <?= htmlspecialchars($status['PNAME']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <!-- New field: Assignee -->
+            <div class="form-group">
+                <label for="newTaskAssignee">Assign To</label>
+                <select id="newTaskAssignee" class="form-control" name="ASSIGNEE">
+                    <option value="">Unassigned</option>
+                    <?php foreach ($users as $user): ?>
+                        <option value="<?= htmlspecialchars($user['USER_KEY']) ?>">
+                            <?= htmlspecialchars($user['display_name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
             <!-- Existing field: Priority -->
             <div class="form-group">
                 <label for="newTaskPriority">Priority</label>
@@ -170,6 +192,7 @@ const boardView = {
     async loadData() {
         const response = await fetch('index.php?page=projects&action=board&id=<?= $_GET['id'] ?>&api=1');
         this.data = await response.json();
+        console.log(this.data);
         await this.setupTypeFilters();
         this.render(); // Move render here, after filters are set up
     },
@@ -547,10 +570,10 @@ document.getElementById('addTaskForm').addEventListener('submit', function(e) {
         projectId: document.getElementById('projectId').value,
         SUMMARY: document.getElementById('newTaskTitle').value,
         ISSUETYPE: document.getElementById('newTaskType').value,
-        DESCRIPTION: document.getElementById('newTaskDescription').value,  // can be empty
+        DESCRIPTION: document.getElementById('newTaskDescription').value,
         PRIORITY: document.getElementById('newTaskPriority').value,
-        // Optionally set default status using first workflow status; fallback to first tab's status ID
-        STATUS_ID: boardView.data && Object.values(boardView.data.workflow)[0] ? Object.values(boardView.data.workflow)[0].ID : ''
+        STATUS_ID: document.getElementById('newTaskStatus').value,
+        ASSIGNEE: document.getElementById('newTaskAssignee').value
     };
     fetch('index.php?page=issues&action=create', {
         method: 'POST',

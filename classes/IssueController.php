@@ -180,28 +180,38 @@ class IssueController {
             echo json_encode(['success' => false, 'message' => 'Invalid JSON input']);
             exit;
         }
-        // Validate required field: TITLE (SUMMARY)
-        if (empty($data['SUMMARY'])) {
-            echo json_encode(['success' => false, 'message' => 'Title (SUMMARY) is required']);
+        
+        // Get the issuetype ID from the type name
+        $stmt = $this->db->prepare("SELECT ID FROM ISSUETYPE WHERE PNAME = ?");
+        $stmt->execute([$data['ISSUETYPE']]);
+        $issueTypeId = $stmt->fetchColumn();
+        
+        if (!$issueTypeId) {
+            echo json_encode(['success' => false, 'message' => 'Invalid issue type']);
             exit;
         }
-        // Map uppercase keys from AJAX into lower-case keys expected by createIssue
+        
+        // Map the incoming API data to match form-based creation format
         $mappedData = [
-            'projectId'   => $data['projectId'] ?? null,
-            'summary'     => $data['SUMMARY'],
-            'description' => $data['DESCRIPTION'] ?? '',  // allow empty description
-            'issuetype'   => $data['ISSUETYPE'] ?? 'Task',
-            'priority'    => $data['PRIORITY'] ?? 'Medium',
-            'reporter'    => $data['REPORTER'] ?? '',
-            'assignee'    => $data['ASSIGNEE'] ?? null,
-            'STATUS_ID'   => $data['STATUS_ID'] ?? null
+            'projectId' => $data['projectId'],
+            'summary' => $data['SUMMARY'],
+            'description' => $data['DESCRIPTION'] ?? '',
+            'issuetype' => $issueTypeId,  // Use the ID instead of the name
+            'priority' => $data['PRIORITY'],
+            'reporter' => User::getCurrentUser(),
+            'assignee' => $data['ASSIGNEE'],
+            'status' => $data['STATUS_ID']  // This maps to issuestatus in the database
         ];
         
-        $issueId = $this->issueModel->createIssue($mappedData);
-        if ($issueId) {
-            echo json_encode(['success' => true, 'issueId' => $issueId]);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Error creating task']);
+        try {
+            $issueId = $this->issueModel->createIssue($mappedData);
+            if ($issueId) {
+                echo json_encode(['success' => true, 'issueId' => $issueId]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Error creating task']);
+            }
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
         exit;
     }
@@ -400,29 +410,26 @@ class IssueController {
             throw new Exception("Project not found");
         }
         
-        // Get all possible statuses
-        $allStatuses = $this->issueModel->getAllStatuses();
-        
-        // Get all issues for the project
-        $issues = $this->issueModel->getIssuesForBoard($id);
+        // Get workflow steps for this project
+        $workflowModel = new Workflow($this->db);
+        $workflow = $workflowModel->getWorkflowSteps($id);
         
         // Get all users for assignment
         $userModel = new User($this->db);
         $users = $userModel->getAllUsers();
         
-        // Initialize all status columns
-        $boardColumns = [];
-        foreach ($allStatuses as $status) {
-            $boardColumns[$status['ID']] = [];  // Changed from PNAME to ID
-        }
+        // Get all issues for the project
+        $issues = $this->issueModel->getIssuesForBoard($id);
         
-        // Fill in the issues
-        foreach ($issues as $issue) {
-            $statusId = $issue['STATUS'] ?? 'Open';  // Changed from status to statusId
-            $boardColumns[$statusId][] = $issue;
-        }
+        // Prepare data array for view
+        $data = [
+            'project' => $project,
+            'workflow' => $workflow,
+            'users' => $users,
+            'issues' => $issues
+        ];
         
-        $appName = $this->config['name'];  // Add this line
+        $appName = $this->config['name'];
         include 'views/projects/board.php';
     }
 

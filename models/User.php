@@ -1,26 +1,12 @@
 <?php
+
 class User {
     private $db;
-    private static $currentUser = 'scrumviewer';
 
     public function __construct($db) {
         $this->db = $db;
     }
 
-    public static function getCurrentUser() {
-        return self::$currentUser;
-    }
-
-    public static function isLoggedIn() {
-        return true;
-    }
-
-    public static function getName() {
-        return self::$currentUser;
-    }
-    // public static function getCurrentUser() {
-    //     return $_SESSION['user'] ?? null;
-    // }
     public function getAllUsers() {
         $query = "
             SELECT 
@@ -28,9 +14,9 @@ class User {
                 COALESCE(cu.display_name, u.USER_KEY) as display_name,
                 cu.email_address,
                 cu.active
-            FROM APP_USER u
-            LEFT JOIN CWD_USER cu ON u.USER_KEY = cu.USER_NAME
-            WHERE cu.active = 1
+            FROM USER u
+            LEFT JOIN CWD_USER cu ON u.USER_KEY = cu.user_name
+            WHERE u.active = 1
             ORDER BY cu.display_name, u.USER_KEY
         ";
         
@@ -43,6 +29,11 @@ class User {
             return [];
         }
     }
+
+    public static function getCurrentUser() {
+        return $_SESSION['user'] ?? null;
+    }
+
     public function getUserById($id) {
         $query = "
             SELECT 
