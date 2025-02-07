@@ -23,6 +23,8 @@ class IssueController {
         
         // Get project details for breadcrumb
         $project = $this->projectModel->getProjectById($issue['PROJECT']);
+        $projectName = $project['PNAME']; // Get actual project name
+        
         $linkedIssues = $this->issueModel->getLinkedIssues($issue['ID']);
         $history = $this->issueModel->getIssueHistory($id);
         $linkTypes = $this->issueModel->getAllLinkTypes();
@@ -75,6 +77,10 @@ class IssueController {
         if (!$issue) {
             throw new Exception("Issue not found");
         }
+
+        // Get project details for breadcrumb
+        $project = $this->projectModel->getProjectById($issue['PROJECT']);
+        $projectName = $project['PNAME']; // Get actual project name
 
         $userModel = new User($this->db);
         $users = $userModel->getAllUsers();
