@@ -6,7 +6,7 @@ include 'views/templates/header.php';
 <style>
     :root {
         /* Professional color palette */
-        --color-primary: #2684FF;
+        --color-primary: #20579e;
         --color-success: #36B37E;
         --color-warning: #FFAB00;
         --color-danger: #FF5630;
