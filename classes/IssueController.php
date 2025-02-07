@@ -392,16 +392,50 @@ class IssueController {
         return $text;
     }
 
-    public function delete($id) {
-        try {
-            $result = $this->issueModel->deleteIssue($id);
-            header('Content-Type: application/json');
-            echo json_encode(['success' => true]);
-        } catch (Exception $e) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    public function delete($issueIds) {
+        if (empty($issueIds)) {
+            return ['success' => false, 'error' => 'No issues specified for deletion'];
         }
-        exit;
+
+        try {
+            $this->db->beginTransaction();
+
+            foreach ($issueIds as $id) {
+                // Verify issue exists first
+                $stmt = $this->db->prepare("SELECT ID FROM JIRAISSUE WHERE ID = ?");
+                $stmt->execute([$id]);
+                if (!$stmt->fetch()) {
+                    throw new Exception("Issue ID $id not found");
+                }
+
+                // Delete issue links
+                $stmt = $this->db->prepare("DELETE FROM ISSUELINK WHERE SOURCE = ? OR DESTINATION = ?");
+                $stmt->execute([$id, $id]);
+
+                // Delete change items
+                $stmt = $this->db->prepare("
+                    DELETE FROM CHANGEITEM 
+                    WHERE GROUPID IN (SELECT ID FROM CHANGEGROUP WHERE ISSUEID = ?)
+                ");
+                $stmt->execute([$id]);
+
+                // Delete change groups
+                $stmt = $this->db->prepare("DELETE FROM CHANGEGROUP WHERE ISSUEID = ?");
+                $stmt->execute([$id]);
+
+                // Delete the issue
+                $stmt = $this->db->prepare("DELETE FROM JIRAISSUE WHERE ID = ?");
+                $stmt->execute([$id]);
+            }
+
+            $this->db->commit();
+            return ['success' => true];
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log($e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
     }
 
     public function board($id) {

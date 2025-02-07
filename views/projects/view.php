@@ -351,9 +351,40 @@ a.text-dark:hover {
 </style>
 
 <script>
+// Define global variables and functions
+window.issues = <?= json_encode($issues) ?>;
+window.filterIssues = null; // Will be assigned in DOMContentLoaded
+window.handleDelete = function(issueId, issueKey) {
+    if (confirm(`Are you sure you want to delete issue ${issueKey}? This action cannot be undone.`)) {
+        fetch('index.php?page=issues&action=delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ids: [issueId]
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Simply remove the table row
+                document.querySelector(`tr[data-issue-id="${issueId}"]`).remove();
+            } else {
+                throw new Error(data.error || 'Failed to delete issue');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to delete issue: ' + error.message);
+        });
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const project = <?= json_encode($project) ?>;
-    const issues = <?= json_encode($issues) ?>;
+    // Move issues to window scope so it's accessible to handleDelete
+    window.issues = <?= json_encode($issues) ?>;
     const filterInput = document.getElementById('issueFilter');
     const tbody = document.getElementById('issueTableBody');
     let currentSort = { column: '', direction: 'asc' };
@@ -383,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderIssues(filteredIssues) {
         tbody.innerHTML = filteredIssues.map(issue => `
-            <tr>
+            <tr data-issue-id="${issue.ID}">
                 <td data-label="ID" data-value="${issue.ID}">
                     <span class="badge badge-secondary">
                         ${project.PKEY}-${issue.ID}
@@ -420,9 +451,9 @@ document.addEventListener('DOMContentLoaded', function() {
                            class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-edit"></i><span class="d-none d-md-inline"> Edit</span>
                         </a>
-                        <button class="btn btn-sm btn-outline-danger delete-issue" 
-                                data-issue-id="${issue.ID}"
-                                data-issue-key="${project.PKEY}-${issue.ID}">
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-danger"
+                                onclick="handleDelete(${issue.ID}, '${project.PKEY}-${issue.ID}')">
                             <i class="fas fa-trash"></i><span class="d-none d-md-inline"> Delete</span>
                         </button>
                     </div>
@@ -530,30 +561,34 @@ document.addEventListener('DOMContentLoaded', function() {
     renderIssues(issues);
 
     // Add delete functionality to the buttons
-    document.querySelectorAll('.delete-issue').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const issueId = this.dataset.issueId;
-            const issueKey = this.dataset.issueKey;
-            if (confirm(`Are you sure you want to delete issue ${issueKey}?`)) {
-                fetch(`index.php?page=issues&action=delete&id=${issueId}`, {
-                    method: 'POST'
+    function handleDelete(issueId, issueKey) {
+        if (confirm(`Are you sure you want to delete issue ${issueKey}?`)) {
+            fetch(`index.php?page=issues&action=delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ids: [issueId]  // Send as array to support bulk delete
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        this.closest('tr').remove();
-                    } else {
-                        alert(data.error || 'Failed to delete issue');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Failed to delete issue');
-                });
-            }
-        });
-    });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the deleted issue from our issues array
+                    issues = issues.filter(issue => issue.ID !== issueId);
+                    // Re-render the filtered issues
+                    filterIssues();
+                } else {
+                    alert(data.error || 'Failed to delete issue');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to delete issue');
+            });
+        }
+    }
 
     // Track selected issue types
     // Use project-specific storage key

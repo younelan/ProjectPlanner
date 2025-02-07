@@ -102,9 +102,17 @@ try {
                 $controller->store();
                 break;
             case 'delete':
-                if ($id === null) throw new Exception("Issue ID required");
                 header('Content-Type: application/json');
-                echo json_encode($controller->delete($id));
+                $input = json_decode(file_get_contents('php://input'), true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    echo json_encode(['success' => false, 'error' => 'Invalid JSON data']);
+                    exit;
+                }
+                if (!isset($input['ids']) || !is_array($input['ids'])) {
+                    echo json_encode(['success' => false, 'error' => 'Invalid or missing issue IDs']);
+                    exit;
+                }
+                echo json_encode($controller->delete($input['ids']));
                 exit;
                 break;
             case 'updateStatus':
