@@ -65,6 +65,9 @@ class ProjectController {
             ];
         }
 
+        // Get available issue types
+        $issueTypes = $this->issueModel->getAllIssueTypes();
+
         $appName = $this->config['name'];
         include 'views/projects/view.php';
     }

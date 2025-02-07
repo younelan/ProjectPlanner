@@ -519,23 +519,41 @@ class IssueController {
     }
 
     public function status() {
-        $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['ids']) || !isset($data['value'])) {
-            return ['success' => false, 'error' => 'Missing required fields'];
-        }
-
+        header('Content-Type: application/json');
+        
         try {
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!isset($data['ids']) || !isset($data['value'])) {
+                echo json_encode(['success' => false, 'error' => 'Missing required fields']);
+                exit;
+            }
+
             $this->db->beginTransaction();
+
+            // Get the status name for the response
+            $stmt = $this->db->prepare("SELECT PNAME FROM ISSUESTATUS WHERE ID = ?");
+            $stmt->execute([$data['value']]);
+            $statusName = $stmt->fetchColumn();
+            
+            if (!$statusName) {
+                throw new Exception('Invalid status ID');
+            }
+            
+            // Update issue statuses
             $stmt = $this->db->prepare("UPDATE JIRAISSUE SET ISSUESTATUS = ? WHERE ID = ?");
             foreach ($data['ids'] as $id) {
                 $stmt->execute([$data['value'], $id]);
+                $this->issueModel->logChange($id, 'status', '', $statusName);
             }
+            
             $this->db->commit();
-            return ['success' => true];
+            echo json_encode(['success' => true, 'statusName' => $statusName]);
+            
         } catch (Exception $e) {
             $this->db->rollBack();
-            return ['success' => false, 'error' => $e->getMessage()];
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
+        exit;
     }
 
     // Add new method for moving issues
@@ -576,6 +594,44 @@ class IssueController {
             $this->db->rollBack();
             return ['success' => false, 'error' => $e->getMessage()];
         }
+    }
+
+    public function type() {
+        header('Content-Type: application/json');
+        
+        try {
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!isset($data['ids']) || !isset($data['value'])) {
+                echo json_encode(['success' => false, 'error' => 'Missing required fields']);
+                exit;
+            }
+
+            $this->db->beginTransaction();
+
+            // Get the new type name for the response
+            $stmt = $this->db->prepare("SELECT PNAME FROM ISSUETYPE WHERE ID = ?");
+            $stmt->execute([$data['value']]);
+            $typeName = $stmt->fetchColumn();
+            
+            if (!$typeName) {
+                throw new Exception('Invalid issue type ID');
+            }
+            
+            // Update issue types
+            $stmt = $this->db->prepare("UPDATE JIRAISSUE SET ISSUETYPE = ? WHERE ID = ?");
+            foreach ($data['ids'] as $id) {
+                $stmt->execute([$data['value'], $id]);
+                $this->issueModel->logChange($id, 'type', '', $typeName);
+            }
+            
+            $this->db->commit();
+            echo json_encode(['success' => true, 'typeName' => $typeName]);
+            
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
     }
 }
 ?>

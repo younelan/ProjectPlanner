@@ -335,7 +335,7 @@ public function getProjectIssuesWithSubcomponents($projectId) {
         $stmt = $this->db->prepare("
             SELECT 
                 ID,
-                PNAME,
+                PNAME AS NAME,
                 DESCRIPTION,
                 ICONURL,
                 SEQUENCE
@@ -392,7 +392,7 @@ public function getProjectIssuesWithSubcomponents($projectId) {
         }
     }
 
-    private function logChange($issueId, $field, $oldValue, $newValue) {
+    public function logChange($issueId, $field, $oldValue, $newValue) {
         $nextGroupId = $this->db->query("SELECT COALESCE(MAX(ID), 0) + 1 FROM CHANGEGROUP")->fetchColumn();
         $nextItemId = $this->db->query("SELECT COALESCE(MAX(ID), 0) + 1 FROM CHANGEITEM")->fetchColumn();
 

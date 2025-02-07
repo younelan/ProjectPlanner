@@ -125,6 +125,7 @@ include 'views/templates/header.php';
                                 <option value="">Bulk Actions...</option>
                                 <option value="assign">Assign To...</option>
                                 <option value="status">Change Status...</option>
+                                <option value="type">Change Type...</option>
                                 <option value="move">Move to Project...</option>
                                 <option value="delete">Delete</option>
                             </select>
@@ -556,6 +557,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 break;
                 
+            case 'type':
+                secondarySelect.style.display = 'block';
+                // Add issue type options
+                const issueTypes = <?= json_encode($issueTypes ?? []) ?>;
+                bulkActionValue.innerHTML = '<option value="">-- Select Type --</option>';
+                issueTypes.forEach(type => {
+                    bulkActionValue.innerHTML += `<option value="${type.ID}">${type.NAME}</option>`;
+                });
+                break;
+                
             case 'delete':
                 secondarySelect.style.display = 'none';
                 break;
@@ -607,22 +618,71 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         return issue;
                     });
-                } else if (action === 'status') {
-                    const statusName = document.getElementById('bulkActionValue').options[
-                        document.getElementById('bulkActionValue').selectedIndex
-                    ].text;
+                } else if (action === 'type') {
+                    const typeName = data.typeName; // Use the type name from the server response
                     
+                    // Add new type to filters if it doesn't exist
+                    const newTypeOption = document.getElementById('type-' + typeName);
+                    if (!newTypeOption) {
+                        const typeFilterContainer = document.getElementById('issueTypeFilters');
+                        const div = document.createElement('div');
+                        div.className = 'form-check';
+                        div.innerHTML = `
+                            <input class="form-check-input issue-type-filter" type="checkbox" 
+                                   id="type-${typeName}" value="${typeName}" checked>
+                            <label class="form-check-label" for="type-${typeName}">
+                                ${typeName}
+                            </label>
+                        `;
+                        typeFilterContainer.appendChild(div);
+                        
+                        // Add event listener to new checkbox
+                        const newCheckbox = div.querySelector('input');
+                        newCheckbox.addEventListener('change', function() {
+                            if (this.checked) {
+                                selectedTypes.add(this.value);
+                            } else {
+                                selectedTypes.delete(this.value);
+                            }
+                            localStorage.setItem(storageKey, JSON.stringify([...selectedTypes]));
+                            filterIssues();
+                        });
+                    }
+                    
+                    // Always add the new type to selectedTypes
+                    selectedTypes.add(typeName);
+                    localStorage.setItem(storageKey, JSON.stringify([...selectedTypes]));
+                    
+                    // Update all matching issues in the array
+                    window.issues = window.issues.map(issue => {
+                        if (selectedIssues.has(issue.ID)) {
+                            return { ...issue, TYPE: typeName };
+                        }
+                        return issue;
+                    });
+                } else if (action === 'status') {
+                    window.issues = window.issues.map(issue => {
+                        if (selectedIssues.has(issue.ID)) {
+                            return { 
+                                ...issue, 
+                                STATUS: data.statusName, // Use statusName from response
+                                STATUS_ID: value 
+                            };
+                        }
+                        return issue;
+                    });
+
                     // Add new status to filters if it doesn't exist
-                    const newStatusOption = document.getElementById('status-' + statusName);
+                    const newStatusOption = document.getElementById('status-' + data.statusName);
                     if (!newStatusOption) {
                         const statusFilterContainer = document.getElementById('issueStatusFilters');
                         const div = document.createElement('div');
                         div.className = 'form-check';
                         div.innerHTML = `
                             <input class="form-check-input issue-status-filter" type="checkbox" 
-                                   id="status-${statusName}" value="${statusName}" checked>
-                            <label class="form-check-label" for="status-${statusName}">
-                                <span class="badge badge-${getStatusBadgeClass(statusName)}">${statusName}</span>
+                                   id="status-${data.statusName}" value="${data.statusName}" checked>
+                            <label class="form-check-label" for="status-${data.statusName}">
+                                <span class="badge badge-${getStatusBadgeClass(data.statusName)}">${data.statusName}</span>
                             </label>
                         `;
                         statusFilterContainer.appendChild(div);
@@ -641,30 +701,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     // Always add the new status to selectedStatuses
-                    selectedStatuses.add(statusName);
+                    selectedStatuses.add(data.statusName);
                     localStorage.setItem(statusStorageKey, JSON.stringify([...selectedStatuses]));
-                    
-                    // Update all matching issues in the array
-                    window.issues = window.issues.map(issue => {
-                        if (selectedIssues.has(issue.ID)) {
-                            return { ...issue, STATUS: statusName, STATUS_ID: value };
-                        }
-                        return issue;
-                    });
-                }
-                
-                // Clear selection and refresh display
-                selectedIssues.clear();
-                document.getElementById('selectAll').checked = false;
-                
-                // Check the new status filter checkbox if it exists
-                if (action === 'status') {
-                    const statusCheckbox = document.getElementById('status-' + statusName);
+
+                    // Check the new status filter checkbox if it exists
+                    const statusCheckbox = document.getElementById('status-' + data.statusName);
                     if (statusCheckbox) {
                         statusCheckbox.checked = true;
                     }
                 }
                 
+                // Clear selection and refresh display
+                selectedIssues.clear();
+                document.getElementById('selectAll').checked = false;
                 filterIssues();
             } else {
                 throw new Error(data.error || 'Operation failed');
