@@ -50,7 +50,7 @@ class User {
                 COALESCE(cu.DISPLAY_NAME, u.USER_KEY) as DISPLAY_NAME,
                 cu.email_address,
                 cu.active
-            FROM USER u
+            FROM APP_USER u
             LEFT JOIN CWD_USER cu ON u.USER_KEY = cu.user_name
             WHERE u.USER_KEY = :id
         ";

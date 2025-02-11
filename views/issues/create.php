@@ -214,8 +214,8 @@ select.form-control {
                             <select class="form-control" id="assignee" name="assignee">
                                 <option value="">Unassigned</option>
                                 <?php foreach ($users as $user): ?>
-                                    <option value="<?= htmlspecialchars($user['LOWER_USER_NAME']) ?>">
-                                        <?= htmlspecialchars($user['LOWER_USER_NAME']) ?>
+                                    <option value="<?= htmlspecialchars($user['USER_KEY']) ?>">
+                                        <?= htmlspecialchars($user['DISPLAY_NAME']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -241,9 +241,9 @@ select.form-control {
                             <label for="reporter">Reporter</label>
                             <select class="form-control" id="reporter" name="reporter">
                                 <?php foreach ($users as $user): ?>
-                                    <option value="<?= htmlspecialchars($user['USERNAME']) ?>" 
-                                            <?= $user['USERNAME'] === User::getCurrentUser() ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($user['DISPLAY_NAME'] ?: $user['USERNAME']) ?>
+                                    <option value="<?= htmlspecialchars($user['USER_KEY']) ?>" 
+                                            <?= $user['USER_KEY'] === User::getCurrentUser() ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($user['DISPLAY_NAME']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>

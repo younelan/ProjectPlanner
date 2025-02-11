@@ -414,6 +414,8 @@ a.text-dark:hover {
 <script>
 // Define global variables and functions
 window.issues = <?= json_encode($issues) ?>;
+window.usersMap = <?= json_encode(array_column($users ?? [], 'DISPLAY_NAME', 'USER_KEY')) ?>;  // Changed from USERNAME to USER_KEY
+
 let selectedIssues = new Set(); // Initialize selectedIssues at the top level
 
 window.filterIssues = null; // Will be assigned in DOMContentLoaded
@@ -503,8 +505,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     </span>
                 </td>
                 <td data-label="Assignee" data-value="${issue.ASSIGNEE || ''}">
-                    ${issue.ASSIGNEE ? `<i class="fas fa-user"></i> ${issue.ASSIGNEE}` : 
-                    '<span class="text-muted"><i class="fas fa-user-slash"></i> Unassigned</span>'}
+                    ${issue.ASSIGNEE ? 
+                        `<i class="fas fa-user"></i> ${window.usersMap[issue.ASSIGNEE] || issue.ASSIGNEE}` : 
+                        '<span class="text-muted"><i class="fas fa-user-slash"></i> Unassigned</span>'}
                 </td>
                 <td data-label="Priority" data-value="${issue.PRIORITY || ''}">
                     ${getPriorityIcon(issue.PRIORITY)}
@@ -554,12 +557,12 @@ document.addEventListener('DOMContentLoaded', function() {
         switch (bulkAction.value) {
             case 'assign':
                 secondarySelect.style.display = 'block';
-                // Add user options
+                // Add user options - store USER_KEY as value, show DISPLAY_NAME as text
                 const users = <?= json_encode($users ?? []) ?>;
                 bulkActionValue.add(new Option('-- Select User --', ''));
                 users.forEach(user => {
-                    // Use correct property names from User model
-                    bulkActionValue.add(new Option(user.DISPLAY_NAME || user.USERNAME, user.USERNAME));
+                    // Use USER_KEY as the value, DISPLAY_NAME as the display text
+                    bulkActionValue.add(new Option(user.DISPLAY_NAME || user.USER_KEY, user.USER_KEY));
                 });
                 break;
                 

@@ -29,12 +29,19 @@ class IssueController {
         $project = $this->projectModel->getProjectById($issue['PROJECT']);
         $projectName = $project['PNAME']; // Get actual project name
         
+        // Retrieve display name for the assignee
+        $userModel = new User($this->db);
+        $assigneeUser = $userModel->getUserById($issue['ASSIGNEE']);
+        $issue['ASSIGNEE'] = $assigneeUser ? $assigneeUser['DISPLAY_NAME'] : $issue['ASSIGNEE'];
+        
+        // Retrieve display name for the reporter
+        $reporterUser = $userModel->getUserById($issue['REPORTER']);
+        $issue['REPORTER'] = $reporterUser ? $reporterUser['DISPLAY_NAME'] : $issue['REPORTER'];
         $linkedIssues = $this->issueModel->getLinkedIssues($issue['ID']);
         $history = $this->issueModel->getIssueHistory($id);
         $linkTypes = $this->issueModel->getAllLinkTypes();
         
         // Get data needed for bulk actions (in case we need them in the view)
-        $userModel = new User($this->db);
         $users = $userModel->getAllUsers();
         $allStatuses = $this->issueModel->getAllStatuses();
         $allProjects = $this->projectModel->getAllProjects();
@@ -455,24 +462,16 @@ class IssueController {
             throw new Exception("Project not found");
         }
         
-        // Get workflow steps for this project
+        // Get all required data
         $workflowModel = new Workflow($this->db);
         $workflow = $workflowModel->getWorkflowSteps($id);
-        
-        // Get all users for assignment
         $userModel = new User($this->db);
         $users = $userModel->getAllUsers();
-        
-        // Get all issues for the project
         $issues = $this->issueModel->getIssuesForBoard($id);
-        
-        // Prepare data array for view
-        $data = [
-            'project' => $project,
-            'workflow' => $workflow,
-            'users' => $users,
-            'issues' => $issues
-        ];
+        $allProjects = $this->projectModel->getAllProjects();
+        $issueTypes = $this->issueModel->getAllIssueTypes();
+        $statuses = $workflowModel->getWorkflowSteps($project['ID']);
+        $linkTypes = $this->issueModel->getAllLinkTypes();
         
         $appName = $this->config['name'];
         include 'views/projects/board.php';
@@ -502,7 +501,14 @@ class IssueController {
         if (!isset($data['ids']) || !isset($data['value'])) {
             return ['success' => false, 'error' => 'Missing required fields'];
         }
-
+        
+        // Convert display name to username if needed
+        $userModel = new User($this->db);
+        $user = $userModel->getUserByDisplayName($data['value']);
+        if ($user) {
+            $data['value'] = $user['USERNAME'];
+        }
+        
         try {
             $this->db->beginTransaction();
             $stmt = $this->db->prepare("UPDATE JIRAISSUE SET ASSIGNEE = ? WHERE ID = ?");

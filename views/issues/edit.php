@@ -201,9 +201,9 @@ select.form-control {
                                 <select class="form-control" id="assignee" name="assignee">
                                     <option value="">Unassigned</option>
                                     <?php foreach ($users as $user): ?>
-                                        <option value="<?= htmlspecialchars($user['LOWER_USER_NAME']) ?>" 
-                                            <?= $issue['ASSIGNEE'] == $user['LOWER_USER_NAME'] ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($user['LOWER_USER_NAME']) ?>
+                                        <option value="<?= htmlspecialchars($user['USER_KEY']) ?>" 
+                                            <?= $issue['ASSIGNEE'] == $user['USER_KEY'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($user['DISPLAY_NAME']) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -228,8 +228,8 @@ select.form-control {
                         <label for="reporter">Reporter</label>
                         <select class="form-control" id="reporter" name="reporter">
                         <?php foreach ($users as $user): ?>
-                                    <option value="<?= htmlspecialchars($user['LOWER_USER_NAME']) ?>">
-                                        <?= htmlspecialchars($user['LOWER_USER_NAME']) ?>
+                                    <option value="<?= htmlspecialchars($user['USER_KEY']) ?>">
+                                        <?= htmlspecialchars($user['DISPLAY_NAME']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -239,10 +239,11 @@ select.form-control {
                     <div class="form-group">
                         <label for="issuetype">Issue Type</label>
                         <select class="form-control" id="issuetype" name="issuetype">
+                            
                             <?php foreach ($issueTypes as $type): ?>
                                 <option value="<?= htmlspecialchars($type['ID']) ?>"
                                     <?= $type['ID'] === $issue['ISSUETYPE'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($type['PNAME']) ?>
+                                    <?= htmlspecialchars($type['NAME']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
