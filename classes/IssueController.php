@@ -497,26 +497,37 @@ class IssueController {
     }
 
     public function assign() {
-        $data = json_decode(file_get_contents('php://input'), true);
-        if (!isset($data['ids']) || !isset($data['value'])) {
-            return ['success' => false, 'error' => 'Missing required fields'];
-        }
-        
-        // Convert display name to username if needed
-        $userModel = new User($this->db);
-        $user = $userModel->getUserByDisplayName($data['value']);
-        if ($user) {
-            $data['value'] = $user['USERNAME'];
-        }
-        
         try {
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!isset($data['ids']) || !isset($data['value'])) {
+                return ['success' => false, 'error' => 'Missing required fields'];
+            }
+
             $this->db->beginTransaction();
+            
+            // Update issues with new assignee - use the USER_KEY directly
             $stmt = $this->db->prepare("UPDATE JIRAISSUE SET ASSIGNEE = ? WHERE ID = ?");
             foreach ($data['ids'] as $id) {
                 $stmt->execute([$data['value'], $id]);
+                // Log the change
+                $this->issueModel->logChange($id, 'assignee', '', $data['value']);
             }
+            
             $this->db->commit();
-            return ['success' => true];
+
+            // Get display name for response
+            $userModel = new User($this->db);
+            $user = $userModel->getUserById($data['value']);
+            $displayName = $user ? $user['DISPLAY_NAME'] : $data['value'];
+
+            return [
+                'success' => true,
+                'assignee' => [
+                    'key' => $data['value'],
+                    'displayName' => $displayName
+                ]
+            ];
+            
         } catch (Exception $e) {
             $this->db->rollBack();
             return ['success' => false, 'error' => $e->getMessage()];

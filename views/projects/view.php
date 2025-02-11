@@ -557,12 +557,11 @@ document.addEventListener('DOMContentLoaded', function() {
         switch (bulkAction.value) {
             case 'assign':
                 secondarySelect.style.display = 'block';
-                // Add user options - store USER_KEY as value, show DISPLAY_NAME as text
+                // Add user options - store USER_KEY as value
                 const users = <?= json_encode($users ?? []) ?>;
                 bulkActionValue.add(new Option('-- Select User --', ''));
                 users.forEach(user => {
-                    // Use USER_KEY as the value, DISPLAY_NAME as the display text
-                    bulkActionValue.add(new Option(user.DISPLAY_NAME || user.USER_KEY, user.USER_KEY));
+                    bulkActionValue.add(new Option(user.DISPLAY_NAME, user.USER_KEY));
                 });
                 break;
                 
@@ -593,11 +592,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             case 'type':
                 secondarySelect.style.display = 'block';
-                // Add issue type options
+                // Add issue type options - using ID and PNAME from issueTypes
                 const issueTypes = <?= json_encode($issueTypes ?? []) ?>;
                 bulkActionValue.innerHTML = '<option value="">-- Select Type --</option>';
                 issueTypes.forEach(type => {
-                    bulkActionValue.innerHTML += `<option value="${type.ID}">${type.PNAME}</option>`; // Changed from NAME to PNAME
+                    // Use ID as value and PNAME as display text
+                    bulkActionValue.innerHTML += `<option value="${type.ID}">${type.PNAME}</option>`;
                 });
                 break;
                 

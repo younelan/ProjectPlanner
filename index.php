@@ -123,16 +123,10 @@ try {
             case 'status':
             case 'move':
             case 'type':
-            case 'bulkLink':  // Add new case
+            case 'bulkLink':
                 header('Content-Type: application/json');
-                $result = match($action) {
-                    'assign' => $controller->assign(),
-                    'status' => $controller->status(),
-                    'move' => $controller->move(),
-                    'type' => $controller->type(),
-                    'bulkLink' => $controller->bulkLink(),  // Add new action
-                };
-                echo json_encode($result);
+                $controller = new IssueController($db, $appConfig);
+                echo json_encode($controller->$action());
                 exit;
                 break;
             default:
