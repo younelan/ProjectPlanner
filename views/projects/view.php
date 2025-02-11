@@ -597,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 bulkActionValue.innerHTML = '<option value="">-- Select Type --</option>';
                 issueTypes.forEach(type => {
                     // Use ID as value and PNAME as display text
-                    bulkActionValue.innerHTML += `<option value="${type.ID}">${type.PNAME}</option>`;
+                    bulkActionValue.innerHTML += `<option value="${type.ID}">${type.NAME}</option>`;
                 });
                 break;
                 
