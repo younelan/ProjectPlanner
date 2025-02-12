@@ -651,30 +651,55 @@ class IssueController {
     }
 
     public function bulkLink() {
-        header('Content-Type: application/json');
+        $this->db->beginTransaction();
         
         try {
             $data = json_decode(file_get_contents('php://input'), true);
-            if (!isset($data['ids']) || !isset($data['targetIssueId']) || !isset($data['linkType'])) {
-                echo json_encode(['success' => false, 'error' => 'Missing required fields']);
-                exit;
+            if (!isset($data['ids'], $data['targetIssueId'], $data['linkType'])) {
+                $this->db->rollBack();
+                return ['success' => false, 'error' => 'Missing required fields'];
             }
 
-            $this->db->beginTransaction();
+            // Verify target issue exists
+            $stmt = $this->db->prepare("SELECT ID FROM JIRAISSUE WHERE ID = ?");
+            $stmt->execute([$data['targetIssueId']]);
+            if (!$stmt->fetch()) {
+                $this->db->rollBack();
+                return ['success' => false, 'error' => 'Target issue not found'];
+            }
+
+            // Get next ID for ISSUELINK
+            $nextLinkId = $this->db->query("SELECT COALESCE(MAX(ID), 0) + 1 FROM ISSUELINK")->fetchColumn();
             
-            // For each selected issue, create a link
             foreach ($data['ids'] as $sourceId) {
-                $this->issueModel->addIssueLink($sourceId, $data['targetIssueId'], $data['linkType']);
+                if ($sourceId == $data['targetIssueId']) {
+                    continue; // Skip self-linking
+                }
+
+                $stmt = $this->db->prepare("
+                    INSERT INTO ISSUELINK (ID, LINKTYPE, SOURCE, DESTINATION)
+                    VALUES (:id, :linktype, :source, :destination)
+                ");
+                
+                $stmt->execute([
+                    'id' => $nextLinkId++,
+                    'linktype' => $data['linkType'],
+                    'source' => $sourceId,
+                    'destination' => $data['targetIssueId']
+                ]);
+
+                // Log the change
+                $this->issueModel->logChange($sourceId, 'link', '', "Added link to issue {$data['targetIssueId']}");
             }
             
             $this->db->commit();
-            echo json_encode(['success' => true]);
+            return ['success' => true];
             
         } catch (Exception $e) {
             $this->db->rollBack();
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            error_log("Bulk link error: " . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
         }
-        exit;
     }
 }
 ?>

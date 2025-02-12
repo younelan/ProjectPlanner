@@ -123,10 +123,10 @@ try {
             case 'status':
             case 'move':
             case 'type':
-            case 'bulkLink':
+            case 'bulkLink':    // Add explicit case for bulkLink
                 header('Content-Type: application/json');
-                $controller = new IssueController($db, $appConfig);
-                echo json_encode($controller->$action());
+                $result = $controller->$action();
+                echo json_encode($result);
                 exit;
                 break;
             default:
@@ -160,6 +160,9 @@ try {
     }
 } catch (Exception $e) {
     http_response_code(404);
+    error_log(print_r($_POST,true));
+    error_log("Error: " . $e->getMessage());
+    error_log($_SERVER['REQUEST_URI']);
     echo "Error: " . htmlspecialchars($e->getMessage());
 }
 

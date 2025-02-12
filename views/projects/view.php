@@ -142,11 +142,13 @@ include 'views/templates/header.php';
                     </div>
                 </div>
                 <div id="bulkLinkIssue" class="col-auto" style="display: none;">
-                    <div class="autocomplete-wrapper position-relative">
-                        <input type="text" class="form-control" id="linkIssueAutocomplete" 
-                               placeholder="Search for an issue to link">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="linkIssueAutocomplete" placeholder="Search for an issue to link...">
                         <input type="hidden" id="selectedIssueId">
-                        <div id="autocompleteResults" class="position-absolute w-100 bg-white shadow-sm" style="display: none; z-index: 1000;"></div>
+                        <div class="position-absolute w-100 bg-white border rounded shadow-sm" 
+                             id="autocompleteResults" 
+                             style="display: none; top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -608,8 +610,70 @@ document.addEventListener('DOMContentLoaded', function() {
                 linkTypes.forEach(type => {
                     bulkActionValue.innerHTML += `<option value="${type.ID}">${type.LINKNAME}</option>`;
                 });
-                // Show autocomplete field
-                document.getElementById('bulkLinkIssue').style.display = 'block';
+
+                // Show and initialize autocomplete field
+                const bulkLinkDiv = document.getElementById('bulkLinkIssue');
+                bulkLinkDiv.style.display = 'block';
+                bulkLinkDiv.innerHTML = `
+                    <div class="input-group mt-2">
+                        <input type="text" class="form-control" id="linkIssueAutocomplete" 
+                               placeholder="Search for an issue to link...">
+                        <input type="hidden" id="selectedIssueId">
+                        <div class="position-absolute w-100 bg-white border rounded shadow-sm" 
+                             id="autocompleteResults" 
+                             style="display: none; top: 100%; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                        </div>
+                    </div>
+                `;
+
+                // Set up autocomplete events
+                const autocompleteInput = document.getElementById('linkIssueAutocomplete');
+                const autocompleteResults = document.getElementById('autocompleteResults');
+                const selectedIssueInput = document.getElementById('selectedIssueId');
+
+                // Clear any existing event listeners
+                const newAutocompleteInput = autocompleteInput.cloneNode(true);
+                autocompleteInput.parentNode.replaceChild(newAutocompleteInput, autocompleteInput);
+
+                let debounceTimer;
+                newAutocompleteInput.addEventListener('input', function() {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        const searchTerm = this.value;
+                        if (searchTerm.length < 2) {
+                            autocompleteResults.style.display = 'none';
+                            return;
+                        }
+
+                        fetch(`index.php?page=issues&action=autocompleteIssues&term=${encodeURIComponent(searchTerm)}&projectId=<?= $project['ID'] ?>`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (!Array.isArray(data)) {
+                                    console.error('Invalid response format');
+                                    return;
+                                }
+                                autocompleteResults.innerHTML = data.map(item => `
+                                    <div class="p-2 border-bottom autocomplete-result cursor-pointer hover:bg-gray-100" 
+                                         data-id="${item.ID}" 
+                                         data-label="${item.LABEL}">
+                                        ${item.LABEL}
+                                    </div>
+                                `).join('');
+                                autocompleteResults.style.display = 'block';
+                            });
+                    }, 300);
+                });
+
+                // Handle click on autocomplete result
+                autocompleteResults.addEventListener('click', function(e) {
+                    const result = e.target.closest('.autocomplete-result');
+                    if (result) {
+                        newAutocompleteInput.value = result.dataset.label;
+                        selectedIssueInput.value = result.dataset.id;
+                        autocompleteResults.style.display = 'none';
+                    }
+                });
+
                 break;
                 
             case 'delete':
@@ -1041,7 +1105,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     autocompleteResults.innerHTML = data.map(item => `
-                        <div class="autocomplete-result" 
+                        <div class="p-2 border-bottom autocomplete-result" 
                              data-id="${item.ID}" 
                              data-label="${item.LABEL}">
                             ${item.LABEL}
@@ -1069,6 +1133,55 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Add initializeAutocomplete function definition before it's used
+function initializeAutocomplete() {
+    const autocompleteInput = document.getElementById('linkIssueAutocomplete');
+    const autocompleteResults = document.getElementById('autocompleteResults');
+    const selectedIssueInput = document.getElementById('selectedIssueId');
+    let debounceTimer;
+
+    autocompleteInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const searchTerm = this.value;
+            if (searchTerm.length < 2) {
+                autocompleteResults.style.display = 'none';
+                return;
+            }
+
+            fetch(`index.php?page=issues&action=autocompleteIssues&term=${encodeURIComponent(searchTerm)}&projectId=<?= $project['ID'] ?>`)
+                .then(response => response.json())
+                .then(data => {
+                    autocompleteResults.innerHTML = data.map(item => `
+                        <div class="p-2 border-bottom autocomplete-result" 
+                             data-id="${item.ID}" 
+                             data-label="${item.LABEL}">
+                            ${item.LABEL}
+                        </div>
+                    `).join('');
+                    autocompleteResults.style.display = 'block';
+                });
+        }, 300);
+    });
+
+    // Handle click on autocomplete result
+    autocompleteResults.addEventListener('click', function(e) {
+        const result = e.target.closest('.autocomplete-result');
+        if (result) {
+            autocompleteInput.value = result.dataset.label;
+            selectedIssueInput.value = result.dataset.id;
+            autocompleteResults.style.display = 'none';
+        }
+    });
+
+    // Hide results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.input-group')) {
+            autocompleteResults.style.display = 'none';
+        }
+    });
+}
 </script>
 
 <?php include 'views/templates/footer.php'; ?>
