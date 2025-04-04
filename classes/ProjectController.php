@@ -16,6 +16,7 @@ class ProjectController {
     private $projectModel;
     private $issueModel;
     private $db;
+    private $pdo;
     private $config;
 
     public function __construct($db, $config) {
