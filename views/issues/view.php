@@ -1,5 +1,5 @@
 <?php 
-$pageTitle = "Issue: " . htmlspecialchars($issue['SUMMARY']);
+$pageTitle = "Issue: " . htmlspecialchars($issue['SUMMARY']??"");
 $projectName = isset($project['PNAME']) ? $project['PNAME'] : 'Project';  // Add project name variable
 include 'views/templates/header.php'; 
 ?>
@@ -109,8 +109,8 @@ include 'views/templates/header.php';
                         <tr>
                             <th>Priority</th>
                             <td>
-                                <span class="badge" style="background-color: #<?= htmlspecialchars($issue['PRIORITY_COLOR']) ?>">
-                                    <?= htmlspecialchars($issue['PRIORITY_NAME']) ?>
+                                <span class="badge" style="background-color: #<?= htmlspecialchars($issue['PRIORITY_COLOR']??"") ?>">
+                                    <?= htmlspecialchars($issue['PRIORITY_NAME']??"") ?>
                                 </span>
                             </td>
                         </tr>
