@@ -105,6 +105,61 @@ class Workflow {
         }
     }
 
+    public function createWorkflowFromXMLTemplate($projectId, $projectName, $xmlContent) {
+        try {
+            $workflowName = "Software Simplified Workflow for " . $projectName;
+
+            // 1. Create workflow scheme
+            $stmt = $this->db->prepare("
+                INSERT INTO WORKFLOWSCHEME (ID, NAME, DESCRIPTION)
+                VALUES (:id, :name, :description)
+            ");
+            
+            $stmt->execute([
+                ':id' => $projectId,
+                ':name' => $workflowName,
+                ':description' => 'Default workflow scheme'
+            ]);
+
+            // 2. Create workflow scheme entity
+            $stmt = $this->db->prepare("
+                INSERT INTO WORKFLOWSCHEMEENTITY (SCHEME, WORKFLOW, ISSUETYPE)
+                VALUES (:scheme, :workflow, 0)
+            ");
+            
+            $stmt->execute([
+                ':scheme' => $projectId,
+                ':workflow' => $workflowName
+            ]);
+
+            // 3. Create workflow with XML from template file
+            $stmt = $this->db->prepare("
+                INSERT INTO JIRAWORKFLOWS (
+                    ID, WORKFLOWNAME, CREATORNAME, DESCRIPTOR, ISLOCKED
+                ) VALUES (
+                    :id, :workflowName, :creatorName, :descriptor, :isLocked
+                )
+            ");
+
+            $result = $stmt->execute([
+                ':id' => $projectId,
+                ':workflowName' => $workflowName,
+                ':creatorName' => 'system',
+                ':descriptor' => $xmlContent,
+                ':isLocked' => 'N'
+            ]);
+
+            if (!$result) {
+                throw new Exception("Failed to create workflow");
+            }
+
+            return $projectId;
+        } catch (Exception $e) {
+            error_log("Workflow creation error: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
     private function createWorkflowScheme($projectId, $workflowName) {
         $stmt = $this->db->prepare("
             INSERT INTO WORKFLOWSCHEME (ID, NAME, DESCRIPTION)

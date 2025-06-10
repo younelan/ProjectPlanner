@@ -257,8 +257,8 @@ class ProjectController {
             $errors[] = 'Project lead is required';
         }
 
-        if (empty($data['clone_project_id'])) {
-            $errors[] = 'Source project for workflow is required';
+        if (empty($data['clone_project_id']) && empty($data['use_default_workflow'])) {
+            $errors[] = 'Either a source project for workflow or default workflow must be selected';
         }
 
         if (!empty($errors)) {
