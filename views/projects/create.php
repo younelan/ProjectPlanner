@@ -59,8 +59,8 @@ include 'views/templates/header.php';
                     </div>
 
                     <div class="form-group">
-                        <label for="clone_project">Clone Workflow From *</label>
-                        <select class="form-control" id="clone_project" name="clone_project_id" required>
+                        <label for="clone_project">Clone Workflow From</label>
+                        <select class="form-control" id="clone_project" name="clone_project_id">
                             <option value="">Select a project...</option>
                             <?php foreach ($projects as $project): ?>
                                 <option value="<?= $project['ID'] ?>"
@@ -71,6 +71,30 @@ include 'views/templates/header.php';
                         </select>
                         <small class="form-text text-muted">The new project will inherit the selected project's workflow</small>
                     </div>
+
+                    <?php if (empty($projects)): ?>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="use_default_workflow" name="use_default_workflow" value="1"
+                                   <?= isset($_POST['use_default_workflow']) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="use_default_workflow">
+                                Use Default Workflow
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">Since no projects exist yet, check this to create a default workflow</small>
+                    </div>
+                    <?php else: ?>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="use_default_workflow" name="use_default_workflow" value="1"
+                                   <?= isset($_POST['use_default_workflow']) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="use_default_workflow">
+                                Use Default Workflow Instead
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">Check this to use the default workflow instead of cloning from an existing project</small>
+                    </div>
+                    <?php endif; ?>
 
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary">Create Project</button>
