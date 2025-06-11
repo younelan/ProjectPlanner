@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "825ac78f7c6502d5bf3b5451cb60b5f0",
+    "content-hash": "8e3bffc967d132be20a6f1f13c9504f3",
     "packages": [
         {
             "name": "opensitez/simplicity",
@@ -42,6 +42,49 @@
                 "issues": "https://github.com/younelan/Simplicity/issues"
             },
             "time": "2025-05-02T19:04:58+00:00"
+        },
+        {
+            "name": "openxtrem/rtf-html-php",
+            "version": "1.2",
+            "source": {
+                "type": "git",
+                "url": "git@gitlab.com:openxtrem_public/components/rtf-html-php.git",
+                "reference": "03070174ae70f34f21d56a82dbeedc9ddfcb9147"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://gitlab.com/api/v4/projects/openxtrem_public%2Fcomponents%2Frtf-html-php/repository/archive.zip?sha=03070174ae70f34f21d56a82dbeedc9ddfcb9147",
+                "reference": "03070174ae70f34f21d56a82dbeedc9ddfcb9147",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "7"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "RtfHtmlPhp\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Alexander van Oostenrijk",
+                    "email": "alex.vanoostenrijk@gmail.com"
+                }
+            ],
+            "description": "RTF to HTML converter in PHP",
+            "keywords": [
+                "converter",
+                "rtf"
+            ],
+            "time": "2023-04-19T12:21:34+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
