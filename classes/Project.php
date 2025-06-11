@@ -103,9 +103,13 @@ class Project {
                 throw new Exception("Failed to create project");
             }
 
-            // Clone workflow in same transaction
+            // Handle workflow creation
             if (!empty($data['clone_project_id'])) {
+                // Clone from existing project
                 $this->workflowModel->cloneWorkflow($data['clone_project_id'], $newId, $data['PNAME']);
+            } elseif (!empty($data['use_default_workflow'])) {
+                // Create default workflow from XML
+                $this->createDefaultWorkflow($newId, $data['PNAME']);
             }
 
             $this->db->commit();
@@ -114,6 +118,22 @@ class Project {
             $this->db->rollBack();
             throw $e;
         }
+    }
+
+    private function createDefaultWorkflow($projectId, $projectName) {
+        // Read the default workflow XML
+        $xmlPath = __DIR__ . '/../complexworkflow.txt';
+        if (!file_exists($xmlPath)) {
+            throw new Exception("Default workflow file not found");
+        }
+        
+        $xmlContent = file_get_contents($xmlPath);
+        if ($xmlContent === false) {
+            throw new Exception("Failed to read default workflow file");
+        }
+
+        // Create workflow from XML template instead of cloning from existing project
+        $this->workflowModel->createWorkflowFromXMLTemplate($projectId, $projectName, $xmlContent);
     }
 
     public function validateProjectKey($key) {
