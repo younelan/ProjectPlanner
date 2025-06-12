@@ -22,7 +22,7 @@ class ProjectController {
     public function __construct($db, $config) {
         $this->db = $db;
         $this->config = $config;
-        $this->projectModel = new Project($db);
+        $this->projectModel = new Project($db, $config);
         $this->issueModel = new Issue($db);
         $this->pdo = $db;
     }
