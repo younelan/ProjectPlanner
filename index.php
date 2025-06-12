@@ -2,6 +2,7 @@
 require_once 'config.php';
 require_once 'classes/Database.php';
 require_once 'classes/User.php';
+require_once 'classes/UserController.php';
 require_once 'classes/Project.php';
 require_once 'classes/Issue.php';
 require_once 'classes/ProjectController.php';
@@ -52,6 +53,34 @@ try {
                 throw new Exception("Invalid action: $action");
         }
     } 
+    else if ($page === 'users') {
+        $controller = new UserController($db, $appConfig);
+        switch ($action) {
+            case 'index':
+                $controller->index();
+                break;
+            case 'create':
+                $controller->create();
+                break;
+            case 'store':
+                $controller->store();
+                break;
+            case 'edit':
+                if ($id === null) throw new Exception("User ID required");
+                $controller->edit($id);
+                break;
+            case 'update':
+                if ($id === null) throw new Exception("User ID required");
+                $controller->update($id);
+                break;
+            case 'delete':
+                if ($id === null) throw new Exception("User ID required");
+                $controller->delete($id);
+                break;
+            default:
+                throw new Exception("Invalid action: $action");
+        }
+    }
     else if ($page === 'issues') {
         $controller = new IssueController($db, $appConfig);
         switch ($action) {
