@@ -3,5 +3,7 @@
         'dsn' => 'mysql:host=localhost;dbname=issues;charset=utf8mb4',
         'username' => 'root',
         'password' => '',
+        'name' => 'Project Agile',
+        'default_workflow_file' => __DIR__ . '/complexworkflow.txt',
     ];
 
