@@ -80,6 +80,9 @@
                         <a class="nav-link" href="index.php"><i class="fas fa-project-diagram"></i> Projects</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="index.php?page=users"><i class="fas fa-users"></i> Users</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="index.php?page=issues&action=search"><i class="fas fa-search"></i> Search Issues</a>
                     </li>
                     <!-- Add Sprint navigation item -->
