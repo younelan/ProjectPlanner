@@ -20,8 +20,8 @@ include 'views/templates/header.php';
         <label for="LEAD">Project Lead</label>
         <select name="LEAD" id="LEAD" class="form-control">
             <?php foreach ($users as $user): ?>
-                <option value="<?= htmlspecialchars($user['USER_KEY']) ?>" <?= $project['LEAD'] == $user['USER_KEY'] ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($user['USER_KEY']) ?> (<?= htmlspecialchars($user['LOWER_USER_NAME']) ?>)
+                <option value="<?= htmlspecialchars($user['USER_KEY'] ?? '') ?>" <?= $project['LEAD'] == $user['USER_KEY'] ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($user['USER_KEY'] ?? '') ?> (<?= htmlspecialchars($user['DISPLAY_NAME'] ?? $user['LOWER_USER_NAME'] ?? '') ?>)
                 </option>
             <?php endforeach; ?>
         </select>
