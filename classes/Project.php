@@ -2,9 +2,11 @@
 class Project {
     private $db;
     private $workflowModel;
+    private $config;
 
-    public function __construct($db) {
+    public function __construct($db, $config = null) {
         $this->db = $db;
+        $this->config = $config;
         $this->workflowModel = new Workflow($db);
     }
 
@@ -122,9 +124,9 @@ class Project {
 
     private function createDefaultWorkflow($projectId, $projectName) {
         // Read the default workflow XML
-        $xmlPath = __DIR__ . '/../complexworkflow.txt';
-        if (!file_exists($xmlPath)) {
-            throw new Exception("Default workflow file not found");
+        $xmlPath = $this->config['default_workflow_file'];
+        if (!$xmlPath || !file_exists($xmlPath)) {
+            throw new Exception("Default workflow file not found at: " . $xmlPath);
         }
         
         $xmlContent = file_get_contents($xmlPath);
