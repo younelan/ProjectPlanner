@@ -6,15 +6,15 @@ include 'views/templates/header.php';
 <form action="index.php?page=projects&action=update&id=<?= htmlspecialchars($project['ID']) ?>" method="post">
     <div class="form-group">
         <label for="PKEY">Project Key</label>
-        <input type="text" name="PKEY" id="PKEY" class="form-control" value="<?= htmlspecialchars($project['PKEY']) ?>" required>
+        <input type="text" name="PKEY" id="PKEY" class="form-control" value="<?= htmlspecialchars($project['PKEY'] ?? '') ?>" required>
     </div>
     <div class="form-group">
         <label for="PNAME">Project Name</label>
-        <input type="text" name="PNAME" id="PNAME" class="form-control" value="<?= htmlspecialchars($project['PNAME']) ?>" required>
+        <input type="text" name="PNAME" id="PNAME" class="form-control" value="<?= htmlspecialchars($project['PNAME'] ?? '') ?>" required>
     </div>
     <div class="form-group">
         <label for="URL">Project URL</label>
-        <input type="text" name="URL" id="URL" class="form-control" value="<?= htmlspecialchars($project['URL']) ?>">
+        <input type="text" name="URL" id="URL" class="form-control" value="<?= htmlspecialchars($project['URL'] ?? '') ?>">
     </div>
     <div class="form-group">
         <label for="LEAD">Project Lead</label>
@@ -28,22 +28,28 @@ include 'views/templates/header.php';
     </div>
     <div class="form-group">
         <label for="PROJECTTYPE">Project Type</label>
-        <input type="text" name="PROJECTTYPE" id="PROJECTTYPE" class="form-control" value="<?= htmlspecialchars($project['PROJECTTYPE']) ?>">
+        <input type="text" name="PROJECTTYPE" id="PROJECTTYPE" class="form-control" value="<?= htmlspecialchars($project['PROJECTTYPE'] ?? '') ?>">
     </div>
     <div class="form-group">
         <label for="ORIGINALKEY">Original Key</label>
-        <input type="text" name="ORIGINALKEY" id="ORIGINALKEY" class="form-control" value="<?= htmlspecialchars($project['ORIGINALKEY']) ?>">
+        <input type="text" name="ORIGINALKEY" id="ORIGINALKEY" class="form-control" value="<?= htmlspecialchars($project['ORIGINALKEY'] ?? '') ?>">
     </div>
     <div class="form-group">
         <label for="DESCRIPTION">Description</label>
-        <textarea name="DESCRIPTION" id="DESCRIPTION" class="form-control"><?= htmlspecialchars($project['DESCRIPTION']) ?></textarea>
+        <textarea name="DESCRIPTION" id="DESCRIPTION" class="form-control"><?= htmlspecialchars($project['DESCRIPTION'] ?? '') ?></textarea>
     </div>
     <button type="submit" class="btn btn-primary">Update Project</button>
 </form>
 
 <!-- [Done #2] New Process Overview Section -->
 <div class="mt-4">
-    <h3>Process Overview</h3>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Process Overview</h3>
+        <a href="index.php?page=workflows&action=view&id=<?= htmlspecialchars($project['ID']) ?>" 
+           class="btn btn-outline-primary">
+            <i class="fas fa-cogs"></i> Edit Workflow
+        </a>
+    </div>
     <div class="row">
         <!-- Tasks by Status -->
         <div class="col-md-6">
