@@ -18,7 +18,19 @@
                     </ol>
                 </nav>
                 
-                <h1>Edit Workflow</h1>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h1>Edit Workflow</h1>
+                    <div class="btn-group">
+                        <a href="index.php?page=workflows&action=editVisual&id=<?php echo $workflow['ID']; ?>" 
+                           class="btn btn-outline-primary">
+                            <i class="fas fa-edit"></i> Visual Editor
+                        </a>
+                        <a href="index.php?page=workflows&action=view&id=<?php echo $workflow['ID']; ?>" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
 
                 <?php if (isset($error)): ?>
                     <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
