@@ -214,4 +214,243 @@ class Workflow {
             throw new Exception("Failed to create workflow: " . $error[2]);
         }
     }
+
+    public function getWorkflowDetails($id) {
+        $stmt = $this->db->prepare("
+            SELECT * 
+            FROM JIRAWORKFLOWS
+            WHERE ID = :id
+        ");
+        $stmt->execute([':id' => $id]);
+        $workflow = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$workflow) {
+            return null;
+        }
+
+        // Parse the XML descriptor
+        if (!empty($workflow['DESCRIPTOR'])) {
+            $xml = new SimpleXMLElement($workflow['DESCRIPTOR']);
+            $workflow['parsed_xml'] = $this->parseWorkflowXML($xml);
+        }
+
+        return $workflow;
+    }
+
+    public function parseWorkflowXML($xml) {
+        $parsed = [
+            'meta' => [],
+            'initial_actions' => [],
+            'common_actions' => [],
+            'steps' => []
+        ];
+
+        // Parse meta information
+        if (isset($xml->meta)) {
+            foreach ($xml->meta as $meta) {
+                $parsed['meta'][(string)$meta['name']] = (string)$meta;
+            }
+        }
+
+        // Parse initial actions
+        if (isset($xml->{'initial-actions'}->action)) {
+            foreach ($xml->{'initial-actions'}->action as $action) {
+                $parsed['initial_actions'][] = $this->parseAction($action);
+            }
+        }
+
+        // Parse common actions
+        if (isset($xml->{'common-actions'}->action)) {
+            foreach ($xml->{'common-actions'}->action as $action) {
+                $parsed['common_actions'][] = $this->parseAction($action);
+            }
+        }
+
+        // Parse steps
+        if (isset($xml->steps->step)) {
+            foreach ($xml->steps->step as $step) {
+                $parsed['steps'][] = $this->parseStep($step);
+            }
+        }
+
+        return $parsed;
+    }
+
+    private function parseAction($action) {
+        $actionData = [
+            'id' => (string)$action['id'],
+            'name' => (string)$action['name'],
+            'view' => (string)$action['view'],
+            'meta' => [],
+            'validators' => [],
+            'conditions' => [],
+            'results' => []
+        ];
+
+        // Parse meta
+        if (isset($action->meta)) {
+            foreach ($action->meta as $meta) {
+                $actionData['meta'][(string)$meta['name']] = (string)$meta;
+            }
+        }
+
+        // Parse validators
+        if (isset($action->validators)) {
+            foreach ($action->validators->validator as $validator) {
+                $actionData['validators'][] = [
+                    'name' => (string)$validator['name'],
+                    'type' => (string)$validator['type'],
+                    'args' => $this->parseArgs($validator)
+                ];
+            }
+        }
+
+        // Parse conditions
+        if (isset($action->{'restrict-to'})) {
+            $actionData['conditions'] = $this->parseConditions($action->{'restrict-to'});
+        }
+
+        // Parse results
+        if (isset($action->results->{'unconditional-result'})) {
+            foreach ($action->results->{'unconditional-result'} as $result) {
+                $actionData['results'][] = [
+                    'old_status' => (string)$result['old-status'],
+                    'status' => (string)$result['status'],
+                    'step' => (string)$result['step'],
+                    'post_functions' => $this->parsePostFunctions($result)
+                ];
+            }
+        }
+
+        return $actionData;
+    }
+
+    private function parseStep($step) {
+        $stepData = [
+            'id' => (string)$step['id'],
+            'name' => (string)$step['name'],
+            'meta' => [],
+            'actions' => []
+        ];
+
+        // Parse meta
+        if (isset($step->meta)) {
+            foreach ($step->meta as $meta) {
+                $stepData['meta'][(string)$meta['name']] = (string)$meta;
+            }
+        }
+
+        // Parse actions
+        if (isset($step->actions)) {
+            foreach ($step->actions->children() as $actionRef) {
+                if ($actionRef->getName() === 'common-action') {
+                    $stepData['actions'][] = [
+                        'type' => 'common',
+                        'id' => (string)$actionRef['id']
+                    ];
+                } else if ($actionRef->getName() === 'action') {
+                    $stepData['actions'][] = [
+                        'type' => 'step',
+                        'action' => $this->parseAction($actionRef)
+                    ];
+                }
+            }
+        }
+
+        return $stepData;
+    }
+
+    private function parseArgs($element) {
+        $args = [];
+        if (isset($element->arg)) {
+            foreach ($element->arg as $arg) {
+                $args[(string)$arg['name']] = (string)$arg;
+            }
+        }
+        return $args;
+    }
+
+    private function parseConditions($restrictTo) {
+        $conditions = [];
+        if (isset($restrictTo->conditions->condition)) {
+            foreach ($restrictTo->conditions->condition as $condition) {
+                $conditions[] = [
+                    'type' => (string)$condition['type'],
+                    'args' => $this->parseArgs($condition)
+                ];
+            }
+        }
+        return $conditions;
+    }
+
+    private function parsePostFunctions($result) {
+        $functions = [];
+        if (isset($result->{'post-functions'}->function)) {
+            foreach ($result->{'post-functions'}->function as $function) {
+                $functions[] = [
+                    'type' => (string)$function['type'],
+                    'args' => $this->parseArgs($function)
+                ];
+            }
+        }
+        return $functions;
+    }
+
+    public function updateWorkflow($id, $data) {
+        try {
+            $this->db->beginTransaction();
+
+            // Update basic workflow info
+            $stmt = $this->db->prepare("
+                UPDATE JIRAWORKFLOWS 
+                SET WORKFLOWNAME = :name, 
+                    DESCRIPTOR = :descriptor,
+                    ISLOCKED = :locked
+                WHERE ID = :id
+            ");
+
+            $result = $stmt->execute([
+                ':id' => $id,
+                ':name' => $data['name'],
+                ':descriptor' => $data['descriptor'],
+                ':locked' => $data['locked'] ?? 'N'
+            ]);
+
+            if (!$result) {
+                throw new Exception("Failed to update workflow");
+            }
+
+            // Update workflow scheme if name changed
+            if (isset($data['scheme_name'])) {
+                $stmt = $this->db->prepare("
+                    UPDATE WORKFLOWSCHEME 
+                    SET NAME = :name 
+                    WHERE ID = :id
+                ");
+                $stmt->execute([
+                    ':id' => $id,
+                    ':name' => $data['scheme_name']
+                ]);
+            }
+
+            $this->db->commit();
+            return true;
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("Workflow update error: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function getAllWorkflows() {
+        $stmt = $this->db->prepare("
+            SELECT w.*, ws.NAME as SCHEME_NAME 
+            FROM JIRAWORKFLOWS w
+            LEFT JOIN WORKFLOWSCHEME ws ON ws.ID = w.ID
+            ORDER BY w.WORKFLOWNAME
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
