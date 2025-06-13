@@ -44,6 +44,20 @@ class WorkflowController {
         include 'views/workflows/edit.php';
     }
 
+    public function editVisual($id) {
+        if (!$id) {
+            throw new Exception("Workflow ID required");
+        }
+
+        $workflow = $this->workflowModel->getWorkflowDetails($id);
+        if (!$workflow) {
+            throw new Exception("Workflow not found");
+        }
+
+        $appName = $this->config['name'];
+        include 'views/workflows/edit_visual.php';
+    }
+
     public function update($id) {
         if (!$id) {
             throw new Exception("Workflow ID required");

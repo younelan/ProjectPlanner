@@ -26,9 +26,13 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h1><?php echo htmlspecialchars($workflow['WORKFLOWNAME'] ?? 'Unnamed Workflow'); ?></h1>
                     <div class="btn-group">
-                        <a href="index.php?page=workflows&action=edit&id=<?php echo $workflow['ID']; ?>" 
+                        <a href="index.php?page=workflows&action=editVisual&id=<?php echo $workflow['ID']; ?>" 
                            class="btn btn-primary">
-                            <i class="fas fa-edit"></i> Edit
+                            <i class="fas fa-edit"></i> Visual Editor
+                        </a>
+                        <a href="index.php?page=workflows&action=edit&id=<?php echo $workflow['ID']; ?>" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-code"></i> XML Editor
                         </a>
                         <a href="index.php?page=workflows&action=export&id=<?php echo $workflow['ID']; ?>" 
                            class="btn btn-success">

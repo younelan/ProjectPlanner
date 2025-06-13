@@ -32,10 +32,10 @@
                         <div class="col-md-6 col-lg-4 mb-3">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title"><?php echo htmlspecialchars($workflow['WORKFLOWNAME']); ?></h5>
+                                    <h5 class="card-title"><?php echo htmlspecialchars($workflow['WORKFLOWNAME'] ?? 'Unnamed Workflow'); ?></h5>
                                     <p class="card-text">
                                         <small class="text-muted">ID: <?php echo $workflow['ID']; ?></small><br>
-                                        <small class="text-muted">Creator: <?php echo htmlspecialchars($workflow['CREATORNAME']); ?></small><br>
+                                        <small class="text-muted">Creator: <?php echo htmlspecialchars($workflow['CREATORNAME'] ?? 'Unknown'); ?></small><br>
                                         <small class="text-muted">Locked: <?php echo $workflow['ISLOCKED'] === 'Y' ? 'Yes' : 'No'; ?></small>
                                     </p>
                                     <div class="btn-group" role="group">

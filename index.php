@@ -177,6 +177,10 @@ try {
                 if ($id === null) throw new Exception("Workflow ID required");
                 $controller->edit($id);
                 break;
+            case 'editVisual':
+                if ($id === null) throw new Exception("Workflow ID required");
+                $controller->editVisual($id);
+                break;
             case 'update':
                 if ($id === null) throw new Exception("Workflow ID required");
                 $controller->update($id);
