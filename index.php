@@ -8,6 +8,7 @@ require_once 'classes/Issue.php';
 require_once 'classes/ProjectController.php';
 require_once 'classes/IssueController.php';
 require_once 'classes/Workflow.php';
+require_once 'classes/WorkflowController.php';
 require_once 'models/Sprint.php';
 require_once 'classes/SprintController.php';
 
@@ -162,6 +163,40 @@ try {
                 throw new Exception("Invalid action: $action");
         }
     } 
+    else if ($page === 'workflows') {
+        $controller = new WorkflowController($db, $appConfig);
+        switch ($action) {
+            case 'index':
+                $controller->index();
+                break;
+            case 'view':
+                if ($id === null) throw new Exception("Workflow ID required");
+                $controller->view($id);
+                break;
+            case 'edit':
+                if ($id === null) throw new Exception("Workflow ID required");
+                $controller->edit($id);
+                break;
+            case 'update':
+                if ($id === null) throw new Exception("Workflow ID required");
+                $controller->update($id);
+                break;
+            case 'duplicate':
+                if ($id === null) throw new Exception("Workflow ID required");
+                $controller->duplicate($id);
+                break;
+            case 'export':
+                if ($id === null) throw new Exception("Workflow ID required");
+                $controller->export($id);
+                break;
+            case 'import':
+                $controller->import();
+                break;
+            default:
+                $controller->index();
+                break;
+        }
+    }
     else if ($page === 'sprints') {
         $controller = new SprintController($db, $appConfig);
         switch ($action) {
