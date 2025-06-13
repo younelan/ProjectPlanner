@@ -256,9 +256,22 @@ class WorkflowController {
                                 $xml .= ' step="' . htmlspecialchars($result['step']) . '"';
                             }
                             $xml .= '>' . "\n";
-                            $xml .= '          <post-functions>' . "\n";
-                            // Add post-functions if needed
-                            $xml .= '          </post-functions>' . "\n";
+                            
+                            // Add post-functions
+                            if (isset($result['functions']) && is_array($result['functions'])) {
+                                $xml .= '          <post-functions>' . "\n";
+                                foreach ($result['functions'] as $function) {
+                                    if (!empty($function['type'])) {
+                                        $xml .= '            <function type="' . htmlspecialchars($function['type']) . '">' . "\n";
+                                        if (!empty($function['class'])) {
+                                            $xml .= '              <arg name="class.name">' . htmlspecialchars($function['class']) . '</arg>' . "\n";
+                                        }
+                                        $xml .= '            </function>' . "\n";
+                                    }
+                                }
+                                $xml .= '          </post-functions>' . "\n";
+                            }
+                            
                             $xml .= '        </unconditional-result>' . "\n";
                         }
                         $xml .= '      </results>' . "\n";
@@ -310,6 +323,25 @@ class WorkflowController {
                                 $xml .= '      <meta name="' . htmlspecialchars($step['meta_names'][$i]) . '">' . htmlspecialchars($step['meta_values'][$i] ?? '') . '</meta>' . "\n";
                             }
                         }
+                    }
+
+                    // Add step actions
+                    if (isset($step['actions']) && is_array($step['actions'])) {
+                        $xml .= '      <actions>' . "\n";
+                        foreach ($step['actions'] as $stepAction) {
+                            if ($stepAction['type'] === 'common' && !empty($stepAction['common_id'])) {
+                                $xml .= '        <common-action id="' . htmlspecialchars($stepAction['common_id']) . '" />' . "\n";
+                            } elseif ($stepAction['type'] === 'step' && (!empty($stepAction['id']) || !empty($stepAction['name']))) {
+                                $xml .= '        <action id="' . htmlspecialchars($stepAction['id'] ?? '') . '" name="' . htmlspecialchars($stepAction['name'] ?? '') . '"';
+                                if (!empty($stepAction['view'])) {
+                                    $xml .= ' view="' . htmlspecialchars($stepAction['view']) . '"';
+                                }
+                                $xml .= '>' . "\n";
+                                // Add step action details (meta, validators, conditions, results) if needed
+                                $xml .= '        </action>' . "\n";
+                            }
+                        }
+                        $xml .= '      </actions>' . "\n";
                     }
 
                     $xml .= '    </step>' . "\n";

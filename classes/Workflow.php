@@ -239,10 +239,7 @@ class Workflow {
 
     public function parseWorkflowXML($xml) {
         $parsed = [
-            'meta' => [],
-            'initial_actions' => [],
-            'common_actions' => [],
-            'steps' => []
+            'meta' => []
         ];
 
         // Parse meta information
@@ -252,28 +249,51 @@ class Workflow {
             }
         }
 
-        // Parse initial actions
-        if (isset($xml->{'initial-actions'}->action)) {
-            foreach ($xml->{'initial-actions'}->action as $action) {
-                $parsed['initial_actions'][] = $this->parseAction($action);
+        // Dynamically parse all sections with actions
+        foreach ($xml->children() as $sectionName => $section) {
+            // Skip meta as it's handled separately
+            if ($sectionName === 'meta') {
+                continue;
             }
-        }
-
-        // Parse common actions
-        if (isset($xml->{'common-actions'}->action)) {
-            foreach ($xml->{'common-actions'}->action as $action) {
-                $parsed['common_actions'][] = $this->parseAction($action);
+            
+            // Convert hyphenated section names to underscored for array keys
+            $sectionKey = str_replace('-', '_', $sectionName);
+            
+            // Initialize section array
+            $parsed[$sectionKey] = [];
+            
+            // If section contains actions, parse them
+            if (isset($section->action)) {
+                foreach ($section->action as $action) {
+                    $parsed[$sectionKey][] = $this->parseAction($action);
+                }
             }
-        }
-
-        // Parse steps
-        if (isset($xml->steps->step)) {
-            foreach ($xml->steps->step as $step) {
-                $parsed['steps'][] = $this->parseStep($step);
+            // If section contains steps, parse them
+            else if ($sectionName === 'steps' && isset($section->step)) {
+                foreach ($section->step as $step) {
+                    $parsed[$sectionKey][] = $this->parseStep($step);
+                }
+            }
+            // For any other section type, store the raw data
+            else {
+                $parsed[$sectionKey] = $this->parseGenericSection($section);
             }
         }
 
         return $parsed;
+    }
+
+    private function parseGenericSection($section) {
+        $data = [];
+        foreach ($section->children() as $child) {
+            $data[] = [
+                'tag' => $child->getName(),
+                'attributes' => (array)$child->attributes(),
+                'value' => (string)$child,
+                'children' => $this->parseGenericSection($child)
+            ];
+        }
+        return $data;
     }
 
     private function parseAction($action) {
