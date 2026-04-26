@@ -4,3 +4,6 @@ config.php
 doc
 *sql
 vendor
+.agents
+.claude
+.vscode
