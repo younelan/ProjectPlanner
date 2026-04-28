@@ -1,6 +1,6 @@
 # Issue Viewer
 
-Simple Jira Viewer using the Database. This is not meant as a full project management tool but should at least allow to show issues.
+Simple Project Planner using a Jira Database. This is not meant as a full project management tool but should at least allow to show/update issues. This allows to show swimlanes and a lot of classic features. No auth for now
 
 ## About
 This project was started because Atlassian Stopped supporting on prem and forced to moved to their cloud server. I ended up with a defunct Jira Server which I had to take down because it was end of Life
